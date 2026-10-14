@@ -5,5 +5,4 @@ session_destroy();
 
 header("Location: login.php");
 exit();
-// ⚠️ ?> closing tag එක දාන්න එපා!
-// ⚠️ HTML හෝ whitespace දාන්න එපා!
+// ⚠️ ?> Don't put the closing tag!

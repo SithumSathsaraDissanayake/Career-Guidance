@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'student') {
 $user_id = $_SESSION['user_id'];
 $msg = "";
 
-// 📥 Form submit වුනාම
+// 📥 Form submit
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['save_academic'])) {
     $stream = trim($_POST['stream']);
     $gpa = floatval($_POST['gpa']);
@@ -23,11 +23,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['save_academic'])) {
         $msg = "<div class='alert alert-danger'>GPA එක 0 සහ 4 අතර විය යුතුයි!</div>";
     } else {
         try {
-            // පරණ academic data delete කරන්න
+            // Delete old academic data.
             $delStmt = $conn->prepare("DELETE FROM student_academic WHERE user_id = :uid");
             $delStmt->execute(['uid' => $user_id]);
             
-            // අලුත් data insert කරන්න
+            // New data insert 
             $insStmt = $conn->prepare(
                 "INSERT INTO student_academic (user_id, stream, gpa) 
                  VALUES (:uid, :stream, :gpa)"
@@ -46,7 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['save_academic'])) {
     }
 }
 
-// දැනට තියෙන academic data ලබාගන්න
+// Get current academic data
 $currentAcademic = null;
 try {
     $stmt = $conn->prepare("SELECT stream, gpa FROM student_academic WHERE user_id = :uid");
@@ -132,14 +132,14 @@ $streamOptions = [
                 <i class="bi bi-mortarboard-fill"></i>
             </div>
             <h3 class="fw-bold">My Academic Background</h3>
-            <p class="text-muted">ඔබේ අධ්‍යාපන තොරතුරු ඇතුළත් කරන්න. මේවා career matching සඳහා භාවිතා වේ.</p>
+            <p class="text-muted">Enter your educational information. This is used for career matching.</p>
         </div>
 
         <?php echo $msg; ?>
 
         <?php if ($currentAcademic): ?>
         <div class="alert alert-info">
-            <strong>දැනට ඔබේ Academic Info:</strong><br>
+            <strong>Currently your Academic Info:</strong><br>
             <i class="bi bi-bookmark-check-fill text-primary me-1"></i>
             Stream: <strong><?php echo htmlspecialchars($currentAcademic['stream']); ?></strong><br>
             <i class="bi bi-star-fill text-warning me-1"></i>
@@ -152,7 +152,7 @@ $streamOptions = [
             <div class="mb-4">
                 <label class="form-label fw-bold mb-3">
                     <i class="bi bi-book text-success me-1"></i>
-                    ඔබේ Stream එක තෝරන්න:
+                    Choose your Stream:
                 </label>
                 
                 <div class="row g-3">
@@ -178,7 +178,7 @@ $streamOptions = [
             <div class="mb-4">
                 <label class="form-label fw-bold">
                     <i class="bi bi-star-fill text-warning me-1"></i>
-                    ඔබේ GPA (0 - 4 අතර):
+                    Your GPA (between 0 - 4):
                 </label>
                 <input 
                     type="number" 
@@ -192,7 +192,7 @@ $streamOptions = [
                     required>
                 <small class="text-muted">
                     <i class="bi bi-info-circle me-1"></i>
-                    ඔබේ GPA එක නොදන්නවා නම්, <strong>3.00</strong> ලෙස දාන්න.
+                    If you don't know your GPA, enter <strong>3.00</strong>.
                 </small>
             </div>
 
@@ -212,15 +212,15 @@ $streamOptions = [
 
 <script>
 function selectStream(stream, element) {
-    // සියලු cards වලින් 'selected' class එක අයින් කරන්න
+    // Remove the 'selected' class from all cards.
     document.querySelectorAll('.stream-card').forEach(card => {
         card.classList.remove('selected');
     });
     
-    // Click කරපු එකට 'selected' class එක add කරන්න
+    // Add the 'selected' class to the clicked item.
     element.classList.add('selected');
     
-    // Hidden input එකට value එක දාන්න
+    // Enter the value for the hidden input.
     document.getElementById('streamInput').value = stream;
 }
 </script>

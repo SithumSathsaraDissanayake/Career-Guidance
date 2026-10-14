@@ -1,33 +1,33 @@
 <?php
 session_start();
-include 'config/db.php'; // ඩේටාබේස් එක ලින්ක් කළා
+include 'config/db.php'; // The database has been linked.
 
-// පරිශීලකයා ඇඩ්මින් කෙනෙක්ද කියා බැලීම
+// Checking if the user is an admin
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     header("Location: login.php");
     exit();
 }
 
-// 📊 ඩෑෂ්බෝඩ් එකට අවශ්‍ය දත්ත ගණනය කිරීම් (Total Counts)
+// 📊 Data calculations required for the dashboard (Total Counts)
 $total_students = 0;
 $total_courses = 0;
 $pending_appointments = 0;
 $recent_appointments = []; 
 
 try {
-    // 1. මුළු සිසුන් ගණන (role = 'student')
+    // 1. Total number of students (role = 'student')
     $student_stmt = $conn->query("SELECT COUNT(*) FROM users WHERE role = 'student'");
     $total_students = $student_stmt ? $student_stmt->fetchColumn() : 0;
 
-    // 2. මුළු පාඨමාලා ගණන
+    // 2. all courses
     $course_stmt = $conn->query("SELECT COUNT(*) FROM courses");
     $total_courses = $course_stmt ? $course_stmt->fetchColumn() : 0;
 
-    // 3. දැනට Pending තියෙන ඇපොයින්ට්මන්ට් ගණන
+    // 3. Pending appoinments
     $app_stmt = $conn->query("SELECT COUNT(*) FROM appointments WHERE status = 'pending'");
     $pending_appointments = $app_stmt ? $app_stmt->fetchColumn() : 0;
 
-    // 🔔 අලුත්ම ඇපොයින්ට්මන්ට් 5ක් ඩේටාබේස් එකෙන් ලබාගැනීම
+    // 🔔 Retrieving the 5 latest appointments from the database
     $recent_stmt = $conn->query("SELECT a.*, u.name AS student_name FROM appointments a 
                                  JOIN users u ON a.user_id = u.user_id 
                                  ORDER BY a.created_at DESC LIMIT 5");
@@ -37,7 +37,7 @@ try {
     }
 
 } catch (PDOException $e) {
-    // Database Errors හසුරුවා ගැනීම
+    // Handling Database Errors 
 }
 
 include 'includes/header.php';

@@ -2,13 +2,13 @@
 $host = "localhost";
 $user = "root";
 $password = "";
-$dbname = "futurepath_db"; // අලුත් database නම මෙතනට දැම්මා
+$dbname = "futurepath_db"; 
 
 try {
-    // Database connection එක සාදනවා
+    // Create Database connection 
     $conn = new PDO("mysql:host=$host;dbname=$dbname", $user, $password);
     
-    // Errors පෙන්නන්න මේක දානවා
+    // To Show Errors 
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     // echo "Connected successfully"; 
 } catch(PDOException $e) {

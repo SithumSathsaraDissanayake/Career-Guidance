@@ -38,9 +38,18 @@ $pdf->Cell(60, 10, 'Value', 1, 1, 'C', true);
 $pdf->SetTextColor(0, 0, 0);
 $pdf->SetFont('Arial', '', 11);
 
-$total_students = $conn->query("SELECT COUNT(*) FROM users WHERE role = 'student'")->fetchColumn();
-$total_appointments = $conn->query("SELECT COUNT(*) FROM appointments")->fetchColumn();
-$approved_payments = $conn->query("SELECT SUM(amount) FROM payments WHERE status = 'Approved'")->fetchColumn() ?? 0;
+// ✅ Safe queries with error handling
+$total_students = 0;
+$total_appointments = 0;
+$approved_payments = 0;
+
+try {
+    $total_students = $conn->query("SELECT COUNT(*) FROM users WHERE role = 'student'")->fetchColumn() ?? 0;
+    $total_appointments = $conn->query("SELECT COUNT(*) FROM appointments")->fetchColumn() ?? 0;
+    $approved_payments = $conn->query("SELECT SUM(amount) FROM payments WHERE status = 'Approved'")->fetchColumn() ?? 0;
+} catch (PDOException $e) {
+    // If there is an error, leave it as 0.
+}
 
 $pdf->Cell(60, 10, 'Total Registered Students', 1);
 $pdf->Cell(60, 10, $total_students, 1, 1, 'C');

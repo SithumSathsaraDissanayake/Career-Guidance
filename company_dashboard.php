@@ -90,76 +90,47 @@ if (isset($_GET['delete_job'])) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
     <style>
-        body {
-            background: radial-gradient(circle at 80% 20%, #1e40af 0%, #0284c7 35%, #1d4ed8 70%, #0369a1 100%);
-            color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            min-height: 100vh;
-        }
-
-        .navbar-custom {
-            background-color: #15181f;
-            border-bottom: 1px solid #2d3748;
-        }
-
-        .card-custom {
-            background-color: #15181f;
-            border: 1px solid #2d3748;
-            border-radius: 16px;
-            color: #ffffff;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-
-        .form-control, .form-select {
-            background-color: #1e2430 !important;
-            border: 1px solid #374151 !important;
-            color: #ffffff !important;
-            padding: 10px 15px;
-            border-radius: 8px;
-        }
-        .form-control:focus, .form-select:focus {
-            border-color: #38bdf8 !important;
-            box-shadow: 0 0 8px rgba(56, 189, 248, 0.2) !important;
-        }
-
-        .btn-custom {
-            background: linear-gradient(to right, #ea580c, #f97316);
-            color: white;
-            border: none;
-            font-weight: 600;
-            border-radius: 8px;
-        }
-        .btn-custom:hover {
-            opacity: 0.9;
-            color: white;
-        }
-
-        .table-custom {
-            color: #f8fafc;
-        }
-        .table-custom th {
-            background-color: #1e2430;
-            color: #38bdf8;
-            border-bottom: 2px solid #374151;
-        }
-        .table-custom td {
-            border-color: #2d3748;
-            background-color: transparent;
-            color: #f8fafc;
-        }
-
-        .form-control::placeholder {
-            color: #9ca3af !important;
-        }
-
-        ::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-        }
-    </style>
+    body {
+        background: radial-gradient(circle at 80% 20%, #1e40af 0%, #0284c7 35%, #1d4ed8 70%, #0369a1 100%);
+        color: #ffffff;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        min-height: 100vh;
+    }
+    .btn-custom {
+    background: linear-gradient(to right, #0284c7, #38bdf8);
+    color: white;
+    border: none;
+    font-weight: 600;
+    border-radius: 8px;
+    }
+    .navbar-custom {
+        background-color: #15181f;
+        border-bottom: 1px solid #2d3748;
+    }
+    .card-custom {
+        background-color: #15181f;
+        border: 1px solid #2d3748;
+        border-radius: 16px;
+        color: #ffffff;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+    .form-control, .form-select {
+        background-color: #1e2430 !important;
+        border: 1px solid #374151 !important;
+        color: #ffffff !important;
+        padding: 10px 15px;
+        border-radius: 8px;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #38bdf8 !important;
+        box-shadow: 0 0 8px rgba(56, 189, 248, 0.2) !important;
+    }
+    .form-label { color: #9ca3af !important; }
+    .form-control::placeholder { color: #6b7280 !important; }
+</style>
 </head>
 <body>
 
-<!-- Navigation Bar with Connected Pages -->
 <nav class="navbar navbar-expand-lg navbar-custom py-3">
     <div class="container">
         <a class="navbar-brand fw-bold text-info fs-4 d-flex align-items-center gap-2" href="company_dashboard.php">
@@ -167,30 +138,14 @@ if (isset($_GET['delete_job'])) {
             <span style="background: linear-gradient(to right, #38bdf8, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">FuturePath</span> 
             <span class="badge bg-warning text-dark fs-6 ms-2">Company Portal</span>
         </a>
-        
-        <button class="navbar-toggler navbar-dark" type="button" data-bs-toggle="collapse" data-bs-target="#companyNavbar">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="companyNavbar">
-            <ul class="navbar-nav me-auto ms-4">
-                <li class="nav-item">
-                    <a class="nav-link text-light active" href="company_dashboard.php"><i class="bi bi-speedometer2 me-1"></i> Dashboard</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-light opacity-75" href="company_applications.php"><i class="bi bi-people-fill me-1"></i> Received Applications</a>
-                </li>
-            </ul>
-
-            <div class="d-flex align-items-center gap-3">
-                <span class="text-light small"><i class="bi bi-building me-1"></i> Company: <strong><?php echo htmlspecialchars($company_name); ?></strong></span>
-                <a href="logout.php" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right"></i> Logout</a>
-            </div>
+        <div class="d-flex align-items-center gap-3">
+            <a href="company_dashboard.php" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left"></i> Dashboard</a>
+            <a href="logout.php" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right"></i> Logout</a>
         </div>
     </div>
 </nav>
 
-<div class="container my-4">
+<div class="container my-5">
 
     <?php echo $msg; ?>
 
@@ -317,7 +272,6 @@ if (isset($_GET['delete_job'])) {
             </div>
         </div>
     </div>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

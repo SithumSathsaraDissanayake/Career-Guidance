@@ -38,20 +38,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $applicant_email = trim($_POST['applicant_email']);
     $user_id = $_SESSION['user_id'];
 
+    // ✅ Check if user already applied for this job
+    $checkStmt = $conn->prepare("SELECT application_id FROM applications WHERE user_id = :uid AND job_id = :jid");
+    $checkStmt->execute(['uid' => $user_id, 'jid' => $job_id]);
+    
+    if ($checkStmt->fetch()) {
+        $error = "You have already applied for this job!";
+    } 
     // File Upload Handling
-    if (isset($_FILES['resume']) && $_FILES['resume']['error'] == 0) {
+    elseif (isset($_FILES['resume']) && $_FILES['resume']['error'] == 0) {
         $allowed_types = ['pdf', 'doc', 'docx'];
+        $max_file_size = 5 * 1024 * 1024; // 5MB
+        
         $file_name = $_FILES['resume']['name'];
         $file_tmp = $_FILES['resume']['tmp_name'];
+        $file_size = $_FILES['resume']['size'];
         $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
 
-        if (in_array($file_ext, $allowed_types)) {
+        // Validate file type
+        if (!in_array($file_ext, $allowed_types)) {
+            $error = "Invalid file format. Only PDF, DOC, and DOCX files are allowed.";
+        } 
+        // Validate file size
+        elseif ($file_size > $max_file_size) {
+            $error = "File size must be less than 5MB.";
+        } 
+        else {
             $new_file_name = "CV_" . $user_id . "_" . time() . "." . $file_ext;
             $upload_dir = "uploads/resumes/";
 
-            // Create directory if not exists
+            // Create directory if not exists (safer permissions)
             if (!is_dir($upload_dir)) {
-                mkdir($upload_dir, 0777, true);
+                mkdir($upload_dir, 0755, true);
             }
 
             $destination = $upload_dir . $new_file_name;
@@ -76,8 +94,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             } else {
                 $error = "Failed to upload CV file. Please try again.";
             }
-        } else {
-            $error = "Invalid file format. Only PDF, DOC, and DOCX files are allowed.";
         }
     } else {
         $error = "Please upload your CV/Resume.";
@@ -92,6 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apply for Job - FuturePath</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </head>
 <body class="bg-light">
 
@@ -100,22 +117,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <div class="col-md-7">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">Job Application Form</h4>
+                    <h4 class="mb-0"><i class="bi bi-send-fill me-2"></i>Job Application Form</h4>
                 </div>
                 <div class="card-body p-4">
 
                     <div class="bg-light p-3 rounded mb-4 border">
                         <h5 class="text-primary mb-1"><?php echo htmlspecialchars($job['job_title']); ?></h5>
-                        <p class="text-muted mb-0"><strong>Company:</strong> <?php echo htmlspecialchars($job['company_name']); ?> | <strong>NVQ Level:</strong> <?php echo htmlspecialchars($job['nvq_level']); ?></p>
+                        <p class="text-muted mb-0">
+                            <strong>Company:</strong> <?php echo htmlspecialchars($job['company_name']); ?> 
+                            | <strong>NVQ Level:</strong> <?php echo htmlspecialchars($job['nvq_level']); ?>
+                        </p>
                     </div>
 
                     <?php if (!empty($message)): ?>
-                        <div class="alert alert-success"><?php echo htmlspecialchars($message); ?></div>
-                        <a href="view_jobs.php" class="btn btn-outline-primary">Back to Vacancies</a>
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            <?php echo htmlspecialchars($message); ?>
+                        </div>
+                        <a href="view_jobs.php" class="btn btn-outline-primary">
+                            <i class="bi bi-arrow-left me-1"></i>Back to Vacancies
+                        </a>
                     <?php else: ?>
 
                         <?php if (!empty($error)): ?>
-                            <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                <?php echo htmlspecialchars($error); ?>
+                            </div>
                         <?php endif; ?>
 
                         <form action="apply_job.php?job_id=<?php echo $job_id; ?>" method="POST" enctype="multipart/form-data">
@@ -130,14 +158,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label fw-bold">Upload Resume / CV (PDF or DOC) <span class="text-danger">*</span></label>
+                                <label class="form-label fw-bold">
+                                    Upload Resume / CV (PDF or DOC) <span class="text-danger">*</span>
+                                </label>
                                 <input type="file" name="resume" class="form-control" accept=".pdf,.doc,.docx" required>
-                                <small class="text-muted">Max file size allowed. Formats: PDF, DOC, DOCX</small>
+                                <small class="text-muted">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Max file size: 5MB. Formats: PDF, DOC, DOCX
+                                </small>
                             </div>
 
                             <div class="d-flex justify-content-between align-items-center mt-4">
-                                <a href="view_jobs.php" class="btn btn-outline-secondary">Cancel</a>
-                                <button type="submit" class="btn btn-primary px-4">Submit Application</button>
+                                <a href="view_jobs.php" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle me-1"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="bi bi-send-fill me-1"></i>Submit Application
+                                </button>
                             </div>
                         </form>
 
@@ -149,5 +186,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

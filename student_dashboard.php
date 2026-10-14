@@ -48,16 +48,47 @@ try {
         }
         .main-wrapper { display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* Smooth Dropdown Hover */
-        .navbar-nav .dropdown:hover .dropdown-menu {
-            display: block;
-            margin-top: 0;
-            animation: fadeIn 0.2s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        /* ✅ Smooth Dropdown Hover — FIXED */
+.navbar-nav .dropdown {
+    position: relative;
+}
+
+.navbar-nav .dropdown .dropdown-toggle::after {
+    margin-left: 5px;
+    transition: transform 0.2s;
+}
+
+.navbar-nav .dropdown:hover .dropdown-toggle::after {
+    transform: rotate(180deg); /* Arrow flips on hover */
+}
+
+/* ✅ Dropdown menu — Open on hover */
+.navbar-nav .dropdown:hover .dropdown-menu {
+    display: block;
+    margin-top: 0;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+/* ✅ Prevent gap issue — Invisible bridge */
+.navbar-nav .dropdown .dropdown-menu {
+    top: 100%;
+    margin-top: 0;
+}
+
+.navbar-nav .dropdown::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    height: 20px;
+    z-index: 100;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
         /* Modern Professional Navbar */
         .custom-navbar { 
@@ -171,12 +202,12 @@ try {
                         </ul>
                     </li>
                     <li class="nav-item dropdown hover-dropdown">
-                        <a class="nav-link dropdown-toggle" href="career_guidance.php" id="careerDropdown" role="button">
+                        <a class="nav-link dropdown-toggle" href="#" id="careerDropdown" role="button">
                             <i class="bi bi-briefcase me-1"></i> Career guidance
                         </a>
                         <ul class="dropdown-menu shadow-lg rounded-4 border-0 py-2 mt-2" aria-labelledby="careerDropdown">
                             <li><a class="dropdown-item py-2" href="build_cv.php"><i class="bi bi-file-earmark-person text-primary me-2"></i> Build my CV</a></li>
-                            <li><a class="dropdown-item py-2" href="aptitude_test.php"><i class="bi bi-puzzle text-warning me-2"></i> Psychological Career Test</a></li>
+                            <li><a class="dropdown-item py-2" href="https://guidance.nie.ac.lk/ctest/"><i class="bi bi-puzzle text-warning me-2"></i> Psychological Career Test</a></li>
                             <li><a class="dropdown-item py-2" href="counseling.php"><i class="bi bi-calendar-check text-success me-2"></i> Book Sessions</a></li>
                         </ul>
                     </li>
@@ -255,11 +286,6 @@ try {
                     <li class="nav-item">
                         <a class="nav-link" href="view_jobs.php">
                             <i class="bi bi-briefcase"></i> Job Vacancies
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="counseling.php">
-                            <i class="bi bi-calendar-event"></i> Counseling
                         </a>
                     </li>
                 </ul>

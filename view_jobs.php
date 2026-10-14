@@ -7,29 +7,35 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-$category_filter = isset($_GET['category']) ? $_GET['category'] : '';
-$nvq_filter = isset($_GET['nvq_level']) ? $_GET['nvq_level'] : '';
+// ✅ Filter inputs
+$category_filter = isset($_GET['category']) ? trim($_GET['category']) : '';
+$nvq_filter = isset($_GET['nvq_level']) ? trim($_GET['nvq_level']) : '';
 
 $jobs = [];
 
 try {
-    // 🔍 Database එකේ Columns (category, nvq_level) වලට ගැලපෙන පරිදි Query එක
     $sql = "SELECT * FROM jobs WHERE 1=1";
+    $params = [];
     
+    // ✅ Category filter — CASE-INSENSITIVE + LIKE
     if (!empty($category_filter)) {
-        $sql .= " AND category = :category";
+        // "it" → match "IT Sector"
+        // "management" → match "Management"
+        // "engineering" → match "Engineering"
+        $sql .= " AND LOWER(category) LIKE LOWER(:category)";
+        $params[':category'] = $category_filter . '%';
     }
+    
+    // ✅ NVQ filter — exact match (formatted properly)
     if (!empty($nvq_filter)) {
         $sql .= " AND nvq_level = :nvq_level";
+        $params[':nvq_level'] = $nvq_filter;
     }
     
     $sql .= " ORDER BY created_at DESC";
+    
     $stmt = $conn->prepare($sql);
-    
-    if (!empty($category_filter)) $stmt->bindValue(':category', $category_filter);
-    if (!empty($nvq_filter)) $stmt->bindValue(':nvq_level', $nvq_filter);
-    
-    $stmt->execute();
+    $stmt->execute($params);
     $jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $jobs = [];
@@ -56,15 +62,21 @@ try {
     </style>
 </head>
 <body>
-    <?php include 'includes/navbar.php'; ?>
 
+    <!-- Single Navbar -->
     <nav class="navbar navbar-expand-lg custom-navbar">
         <div class="container-fluid" style="max-width: 1200px; margin: 0 auto;">
-            <a class="navbar-brand" href="student_dashboard.php"><i class="bi bi-compass-fill me-2"></i>FuturePath</a>
+            <a class="navbar-brand" href="student_dashboard.php">
+                <i class="bi bi-compass-fill me-2"></i>FuturePath
+            </a>
             <div class="collapse navbar-collapse justify-content-end">
                 <ul class="navbar-nav gap-2">
-                    <li class="nav-item"><a class="nav-link" href="student_dashboard.php">Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="view_jobs.php">Vacancies</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="student_dashboard.php">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="view_jobs.php">Vacancies</a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -74,22 +86,63 @@ try {
         
         <div class="p-4 bg-white rounded-3 shadow-sm mb-4 border-start border-success border-5">
             <h3 class="fw-bold text-dark m-0">Explore Career Vacancies & NVQ Matching 💼</h3>
-            <p class="text-muted m-0 mt-1">ඔබේ NVQ සුදුසුකමට ගැළපෙන රැකියා ක්ෂේත්‍රයන් මෙතැනින් පෙරහන් (Filter) කර බලන්න.</p>
+            <p class="text-muted m-0 mt-1">Filter here for job fields that match your NVQ qualification.</p>
         </div>
 
+        <!-- ✅ Category Filter — FIXED with proper values -->
         <div class="d-flex gap-2 flex-wrap mb-3">
             <span class="align-self-center fw-bold text-secondary me-2">Category:</span>
-            <a href="view_jobs.php" class="btn filter-btn <?php echo empty($category_filter) ? 'btn-success' : 'btn-outline-secondary'; ?>">All</a>
-            <a href="view_jobs.php?category=it&nvq_level=<?php echo $nvq_filter;?>" class="btn filter-btn <?php echo $category_filter === 'it' ? 'btn-success' : 'btn-outline-secondary'; ?>">IT Sector</a>
-            <a href="view_jobs.php?category=management&nvq_level=<?php echo $nvq_filter;?>" class="btn filter-btn <?php echo $category_filter === 'management' ? 'btn-success' : 'btn-outline-secondary'; ?>">Management</a>
+            <a href="view_jobs.php" 
+               class="btn filter-btn <?php echo empty($category_filter) ? 'btn-success' : 'btn-outline-secondary'; ?>">
+                All
+            </a>
+            <a href="view_jobs.php?category=IT&nvq_level=<?php echo urlencode($nvq_filter); ?>" 
+               class="btn filter-btn <?php echo strtolower($category_filter) === 'it' ? 'btn-success' : 'btn-outline-secondary'; ?>">
+                IT Sector
+            </a>
+            <a href="view_jobs.php?category=Management&nvq_level=<?php echo urlencode($nvq_filter); ?>" 
+               class="btn filter-btn <?php echo strtolower($category_filter) === 'management' ? 'btn-success' : 'btn-outline-secondary'; ?>">
+                Management
+            </a>
+            <a href="view_jobs.php?category=Engineering&nvq_level=<?php echo urlencode($nvq_filter); ?>" 
+               class="btn filter-btn <?php echo strtolower($category_filter) === 'engineering' ? 'btn-success' : 'btn-outline-secondary'; ?>">
+                Engineering
+            </a>
         </div>
 
+        <!-- ✅ NVQ Filter — FIXED -->
         <div class="d-flex gap-2 flex-wrap mb-4">
             <span class="align-self-center fw-bold text-secondary me-2">NVQ Match:</span>
-            <a href="view_jobs.php?category=<?php echo $category_filter; ?>" class="btn filter-btn <?php echo empty($nvq_filter) ? 'btn-dark' : 'btn-outline-dark'; ?>">Any Level</a>
-            <a href="view_jobs.php?category=<?php echo $category_filter; ?>&nvq_level=NVQ Level 4" class="btn filter-btn <?php echo $nvq_filter === 'NVQ Level 4' ? 'btn-dark' : 'btn-outline-dark'; ?>">Level 4</a>
-            <a href="view_jobs.php?category=<?php echo $category_filter; ?>&nvq_level=NVQ Level 5" class="btn filter-btn <?php echo $nvq_filter === 'NVQ Level 5' ? 'btn-dark' : 'btn-outline-dark'; ?>">Level 5 (HNDIT)</a>
-            <a href="view_jobs.php?category=<?php echo $category_filter; ?>&nvq_level=NVQ Level 6" class="btn filter-btn <?php echo $nvq_filter === 'NVQ Level 6' ? 'btn-dark' : 'btn-outline-dark'; ?>">Level 6</a>
+            <a href="view_jobs.php?category=<?php echo urlencode($category_filter); ?>" 
+               class="btn filter-btn <?php echo empty($nvq_filter) ? 'btn-dark' : 'btn-outline-dark'; ?>">
+                Any Level
+            </a>
+            <a href="view_jobs.php?category=<?php echo urlencode($category_filter); ?>&nvq_level=NVQ Level 4" 
+               class="btn filter-btn <?php echo $nvq_filter === 'NVQ Level 4' ? 'btn-dark' : 'btn-outline-dark'; ?>">
+                Level 4
+            </a>
+            <a href="view_jobs.php?category=<?php echo urlencode($category_filter); ?>&nvq_level=NVQ Level 5" 
+               class="btn filter-btn <?php echo $nvq_filter === 'NVQ Level 5' ? 'btn-dark' : 'btn-outline-dark'; ?>">
+                Level 5 (HNDIT)
+            </a>
+            <a href="view_jobs.php?category=<?php echo urlencode($category_filter); ?>&nvq_level=NVQ Level 6" 
+               class="btn filter-btn <?php echo $nvq_filter === 'NVQ Level 6' ? 'btn-dark' : 'btn-outline-dark'; ?>">
+                Level 6
+            </a>
+        </div>
+
+        <!-- ✅ Results Count -->
+        <div class="mb-3">
+            <small class="text-muted">
+                <i class="bi bi-info-circle me-1"></i>
+                <strong><?php echo count($jobs); ?></strong> job(s) found
+                <?php if (!empty($category_filter)): ?>
+                    in <strong><?php echo htmlspecialchars($category_filter); ?></strong>
+                <?php endif; ?>
+                <?php if (!empty($nvq_filter)): ?>
+                    (<?php echo htmlspecialchars($nvq_filter); ?>)
+                <?php endif; ?>
+            </small>
         </div>
 
         <div class="row g-4">
@@ -100,27 +153,36 @@ try {
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <h4 class="fw-bold text-dark m-0 fs-5"><?php echo htmlspecialchars($job['job_title']); ?></h4>
                                 <span class="badge bg-dark text-white px-2.5 py-1.5 rounded-3 small">
-                                    <i class="bi bi-award-fill me-1 text-warning"></i> <?php echo htmlspecialchars($job['nvq_level']); ?>
+                                    <i class="bi bi-award-fill me-1 text-warning"></i> 
+                                    <?php echo htmlspecialchars($job['nvq_level']); ?>
                                 </span>
                             </div>
-                            <h6 class="text-primary fw-semibold mb-3"><i class="bi bi-building me-1"></i> <?php echo htmlspecialchars($job['company_name']); ?></h6>
+                            <h6 class="text-primary fw-semibold mb-3">
+                                <i class="bi bi-building me-1"></i> 
+                                <?php echo htmlspecialchars($job['company_name']); ?>
+                            </h6>
                             
                             <p class="text-muted small mb-3 flex-grow-1" style="white-space: pre-line;">
-                                <strong>Description:</strong><br><?php echo htmlspecialchars($job['description']); ?>
+                                <strong>Description:</strong><br>
+                                <?php echo htmlspecialchars($job['description']); ?>
                             </p>
 
                             <p class="text-muted small mb-4" style="white-space: pre-line;">
-                                <strong>Qualifications:</strong><br><span class="text-dark fw-medium"><?php echo htmlspecialchars($job['qualifications'] ?? 'N/A'); ?></span>
+                                <strong>Qualifications:</strong><br>
+                                <span class="text-dark fw-medium">
+                                    <?php echo htmlspecialchars($job['qualifications'] ?? 'N/A'); ?>
+                                </span>
                             </p>
                             
                             <hr class="mt-auto opacity-25">
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="text-danger small fw-semibold">
-                                    <i class="bi bi-calendar-x me-1"></i> Closing: <?php echo htmlspecialchars($job['closing_date'] ?? 'Not Specified'); ?>
+                                    <i class="bi bi-calendar-x me-1"></i> 
+                                    Closing: <?php echo htmlspecialchars($job['closing_date'] ?? 'Not Specified'); ?>
                                 </span>
-                               <a href="apply_job.php?job_id=<?php echo $job['job_id']; ?>" class="btn btn-sm btn-primary px-4 rounded-2 fw-semibold">
-    Apply Now <i class="bi bi-arrow-right ms-1"></i>
-</a>
+                                <a href="apply_job.php?job_id=<?php echo $job['job_id']; ?>" class="btn btn-sm btn-primary px-4 rounded-2 fw-semibold">
+                                    Apply Now <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -128,11 +190,12 @@ try {
             <?php else: ?>
                 <div class="col-12 text-center text-muted py-5">
                     <i class="bi bi-briefcase-fill fs-1 d-block mb-2 text-light"></i>
-                    තෝරාගත් සුදුසුකම් යටතේ දැනට කිසිදු රැකියා අවස්ථාවක් ඇතුළත් කර නොමැත.
+                    There are currently no job openings listed under the selected qualifications.
                 </div>
             <?php endif; ?>
         </div>
     </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

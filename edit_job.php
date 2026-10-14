@@ -2,20 +2,14 @@
 session_start();
 include 'config/db.php';
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
+// Company check
+if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'company') {
     header("Location: login.php");
     exit();
 }
 
-$message = '';
-$error = '';
-
-// Check if ID is provided
-if (!isset($_GET['id']) || empty($_GET['id'])) {
-    header("Location: manage_jobs.php");
-    exit();
-}
+$user_id = $_SESSION['user_id'];
+$company_name = $_SESSION['user_name'];
 
 $job_id = intval($_GET['id']);
 
@@ -64,12 +58,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 // Fetch existing job data
 try {
-    $stmt = $conn->prepare("SELECT * FROM jobs WHERE job_id = :job_id");
-    $stmt->execute([':job_id' => $job_id]);
+    $stmt = $conn->prepare("SELECT * FROM jobs WHERE job_id = :job_id AND company_name = :c_name");
+    $stmt->execute([':job_id' => $job_id, ':c_name' => $company_name]);
     $job = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$job) {
-        header("Location: manage_jobs.php");
+        header("Location: company_dashboard.php");
         exit();
     }
 } catch (PDOException $e) {

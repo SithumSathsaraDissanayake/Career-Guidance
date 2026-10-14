@@ -12,7 +12,7 @@ $user_id = $_SESSION['user_id'];
 $engine = new RecommendationEngine($conn);
 $recommendations = $engine->calculateRecommendations($user_id);
 
-// Top 8 විතරක් පෙන්නන්න
+// Show only Top 8
 $recommendations = array_slice($recommendations, 0, 8);
 ?>
 <!DOCTYPE html>
@@ -71,7 +71,7 @@ $recommendations = array_slice($recommendations, 0, 8);
             <i class="bi bi-stars text-warning me-2"></i>
             Your Personalized Career Matches
         </h2>
-        <p class="text-muted">Aptitude Test, Skills සහ Academic දත්ත මත පදනම්ව ගණනය කරන ලද ප්‍රතිඵල.</p>
+        <p class="text-muted">Results calculated based on Aptitude Test, Skills and Academic data.</p>
         
         <div class="d-flex justify-content-center gap-2 mt-3">
             <a href="add_skills.php" class="btn btn-outline-primary btn-sm rounded-pill">
@@ -147,8 +147,7 @@ $recommendations = array_slice($recommendations, 0, 8);
                 </div>
 
                 <div class="d-flex justify-content-end gap-2 mt-2">
-                    <a href="course_payment.php?career_id=<?php echo $item['career_id']; ?>" 
-                       class="btn btn-outline-primary btn-sm rounded-pill px-4">
+                    <a href="course_payment.php?career_id=<?php echo $item['career_id']; ?>" class="btn btn-outline-primary btn-sm rounded-pill px-3">
                         <i class="bi bi-book me-1"></i> Enroll Course
                     </a>
                 </div>
@@ -157,13 +156,13 @@ $recommendations = array_slice($recommendations, 0, 8);
         
         <div class="alert alert-info text-center">
             <i class="bi bi-info-circle-fill me-1"></i>
-            තවත් careers බලන්න <a href="#" class="fw-bold">සියලු careers බලන්න</a>
+            See more careers <a href="#" class="fw-bold">See all careers</a>
         </div>
     <?php else: ?>
         <div class="alert alert-warning text-center p-5">
             <i class="bi bi-exclamation-triangle-fill fs-1 d-block mb-3"></i>
-            <h5>තවමත් නිර්දේශ නොමැත!</h5>
-            <p>කරුණාකර පළමුව Aptitude Test එක සම්පූර්ණ කරන්න.</p>
+            <h5>No recommendations yet!</h5>
+            <p>Please complete the Aptitude Test first.</p>
             <a href="aptitude_test.php" class="btn btn-primary rounded-pill px-4">
                 Take Aptitude Test
             </a>

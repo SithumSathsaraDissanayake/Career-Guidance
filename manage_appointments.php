@@ -1,8 +1,8 @@
 <?php
 session_start();
-include 'config/db.php'; // ඩේටාබේස් එක ලින්ක් කළා
+include 'config/db.php'; // Linked the database.
 
-// පරිශීලකයා ඇඩ්මින් කෙනෙක්ද කියා බැලීම
+// Checking if the user is an admin
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     header("Location: login.php");
     exit();
@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 
 $msg = "";
 
-// 🔄 ඇපොයින්ට්මන්ට් එකක තත්ත්වය (Status) වෙනස් කරන කොටස (Approve / Complete)
+// 🔄 The section that changes the status of an appointment (Approve / Complete)
 if (isset($_GET['action']) && isset($_GET['id'])) {
     $appointment_id = intval($_GET['id']);
     $action = $_GET['action'];
@@ -38,10 +38,10 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
     }
 }
 
-// 🗂️ පද්ධතියේ තියෙන සියලුම ඇපොයින්ට්මන්ට් සිසුන්ගේ නම් සමඟ ඩේටාබේස් එකෙන් ලබාගැනීම
+// 🗂️ Retrieving all appointments in the system from the database along with student names
 $all_appointments = [];
 try {
-    // JOIN එක LEFT JOIN බවට වෙනස් කළා
+    // JOIN changed to LEFT JOIN
     $query = "SELECT a.*, u.name AS student_name, u.email AS student_email FROM appointments a 
               LEFT JOIN users u ON a.user_id = u.user_id 
               ORDER BY a.appointment_date DESC";
@@ -84,18 +84,45 @@ include 'includes/header.php';
     </nav>
 
     <div class="dashboard-container">
-        <!-- Sidebar -->
+        <!-- Sidebar Navigation -->
         <nav class="sidebar">
             <div>
                 <div class="text-center my-3">
-                    <h6 class="mt-2 fw-bold text-dark"><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'Admin'); ?></h6>
+                    <h6 class="mt-2 fw-bold text-dark"><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'Administrator'); ?></h6>
                     <span class="badge bg-danger-subtle text-danger border border-danger">Administrator</span>
                 </div>
                 <hr>
                 <ul class="nav flex-column">
-                    <li class="nav-item"><a class="nav-link" href="admin_dashboard.php"><i class="bi bi-grid-1x2-fill"></i> Overview Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="manage_appointments.php"><i class="bi bi-calendar-check-fill"></i> Appointments</a></li>
-                    <li class="nav-item"><a class="nav-link" href="manage_courses.php"><i class="bi bi-book-half"></i> Manage Courses</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="admin_dashboard.php">
+                            <i class="bi bi-grid-1x2-fill"></i> Overview Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="manage_appointments.php">
+                            <i class="bi bi-calendar-check-fill"></i> Appointments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="manage_courses.php">
+                            <i class="bi bi-book-half"></i> Manage Courses
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="manage_jobs.php">
+                            <i class="bi bi-briefcase-fill"></i> Manage Job Vacancies
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="admin_payments.php">
+                            <i class="bi bi-receipt"></i> Course Payments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="admin_reports.php">
+                            <i class="bi bi-file-earmark-bar-graph-fill"></i> System Reports
+                        </a>
+                    </li>
                 </ul>
             </div>
             <div class="logout-section">

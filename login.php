@@ -8,16 +8,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login_user'])) {
     $email = trim($_POST['email']);
     $password = trim($_POST['password']);
     
-    // ෆෝම් එකෙන් එන Role එක simple letters වලට හරවනවා
+    // Converts the role from the form to simple letters.
     $role = strtolower(trim($_POST['role'])); 
     
-    // ෆෝම් එකෙන් cgo, officer, career guidance officer හෝ counselor මොකක් ආවත් එකම විදිහට සලකනවා
+    // Whether the form says CGO, Officer, Career Guidance Officer or Counselor, it is treated the same.
     if ($role === 'career guidance officer' || $role === 'officer' || $role === 'cgo' || $role === 'counselor') {
         $role = 'counselor';
     }
 
     try {
-        // DB එකේ role එක 'counselor' හෝ 'cgo' විදිහට තිබුණත් හරියටම Select වෙන විදිහට Query එක හදා ඇත
+        // The query is designed to select exactly the role in the DB, even if it is 'counselor' or 'cgo'.
         $query = "SELECT * FROM users WHERE email = :email AND (role = :role OR role = 'counselor' OR role = 'cgo') LIMIT 1";
         $stmt = $conn->prepare($query);
         $stmt->execute(['email' => $email, 'role' => $role]);
@@ -28,7 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login_user'])) {
             $_SESSION['user_name'] = $user['name'];
             $_SESSION['user_role'] = $user['role'];
 
-            // 🔀 Role එක අනුව අදාළ Dashboard එකට Redirect කිරීම
+            // 🔀 Redirect to the relevant Dashboard according to the role
             if ($user['role'] === 'admin') {
                 header("Location: admin_dashboard.php");
                 exit();
@@ -36,7 +36,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login_user'])) {
                 header("Location: student_dashboard.php");
                 exit();
             } elseif ($user['role'] === 'counselor' || $user['role'] === 'cgo' || $user['role'] === 'career guidance officer') {
-                header("Location: counseling.php"); 
+                header("Location: counselor_dashboard.php"); 
                 exit();
             } elseif ($user['role'] === 'company') {
                 header("Location: company_dashboard.php");
@@ -301,7 +301,7 @@ body::after {
             <div class="icon-circle">
                 <i class="bi bi-mortarboard-fill student-icon"></i>
             </div>
-            <p class="role-title">HNDIT Student /<br>Other Trainees</p>
+            <p class="role-title">Student /<br>Other Trainees</p>
         </div>
 
         <div class="role-card" id="counselorCard" onclick="selectRole('counselor')">
@@ -332,11 +332,11 @@ body::after {
             <input type="hidden" name="role" id="userRoleInput" value="">
 
             <div class="mb-3">
-                <label class="form-label text-muted small fw-bold">Email Address</label>
+                <label class="form-label text-light small fw-bold">Email Address</label>
                 <input type="email" name="email" class="form-control" placeholder="enter your email" required>
             </div>
             <div class="mb-3">
-                <label class="form-label text-muted small fw-bold">Password</label>
+                <label class="form-label text-light small fw-bold">Password</label>
                 <input type="password" name="password" class="form-control" placeholder="••••••••" required>
             </div>
             <button type="submit" name="login_user" class="btn btn-submit w-100 mt-2">Sign In <i class="bi bi-box-arrow-in-right ms-1"></i></button>

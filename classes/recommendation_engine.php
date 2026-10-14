@@ -86,7 +86,7 @@ class RecommendationEngine {
     }
 
     private function matchAcademic($academic, $careerField) {
-        if (!$academic) return 50;
+        if (!$academic) return 0;
         
         $stream = strtolower(trim($academic['stream']));
         $field = strtolower(trim($careerField));
@@ -95,17 +95,19 @@ class RecommendationEngine {
         
         // Related fields
         $relatedFields = [
-            'it' => ['it', 'ict', 'computer science', 'engineering'],
-            'ict' => ['it', 'ict', 'computer science'],
-            'physical science' => ['engineering', 'it'],
-            'bio science' => ['healthcare', 'bio', 'medical', 'it'],
-            'commerce' => ['management', 'business', 'it'],
-            'arts' => ['design', 'arts', 'management', 'education'],
-            'engineering' => ['engineering', 'it', 'physical science'],
+            'it' => ['it', 'ict', 'computer science', 'engineering', 'design'],
+            'ict' => ['it', 'ict', 'computer science', 'engineering'],
+            'physical science' => ['engineering', 'construction', 'it', 'healthcare'],
+            'bio science' => ['healthcare', 'bio', 'medical', 'agriculture', 'it'],
+            'commerce' => ['management', 'business', 'it', 'construction'],
+            'arts' => ['design', 'arts', 'management', 'education', 'it'],
+            'engineering' => ['engineering', 'construction', 'it'],
             'management' => ['management', 'business', 'it'],
-            'healthcare' => ['healthcare', 'bio science'],
-            'education' => ['education', 'arts', 'management'],
-            'design' => ['design', 'arts', 'it']
+            'healthcare' => ['healthcare', 'bio science', 'it'],
+            'construction' => ['construction', 'engineering', 'it'],
+            'design' => ['design', 'arts', 'it'],
+            'agriculture' => ['agriculture', 'bio science', 'it'],
+            'education' => ['education', 'arts', 'management', 'it']
         ];
         
         if (isset($relatedFields[$stream]) && in_array($field, $relatedFields[$stream])) {

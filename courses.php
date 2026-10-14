@@ -8,24 +8,57 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = $_SESSION['user_id'];
-$user_result = null;
+$top_career = null;
+$recommendations = [];
 
-// Aptitude Test Result ලබාගැනීම
+// 🔍 Get the top career with the Recommendation Engine
 try {
-    $stmt = $conn->prepare("SELECT * FROM test_results WHERE user_id = :user_id ORDER BY created_at DESC LIMIT 1");
-    $stmt->execute(['user_id' => $user_id]);
-    $user_result = $stmt->fetch(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    $user_result = null;
+    require_once 'classes/recommendation_engine.php';
+    $engine = new RecommendationEngine($conn);
+    $recommendations = $engine->calculateRecommendations($user_id);
+    
+    if (!empty($recommendations)) {
+        $top_career = $recommendations[0];
+    }
+} catch (Exception $e) {
+    $top_career = null;
 }
 
-// 📚 Available Courses ලබාගැනීම
+// 📚 Available Courses
 $all_courses = [];
+$recommended_courses = [];
+
 try {
-    $course_stmt = $conn->query("SELECT * FROM courses ORDER BY course_id DESC");
-    $all_courses = $course_stmt->fetchAll(PDO::FETCH_ASSOC);
+    // ✅ Take only courses relevant to the recommended career.
+    if ($top_career && $top_career['match_percentage'] > 0) {
+        $career_id = $top_career['career_id'];
+        
+        // ✅ Recommended courses (matching career_id)
+        $rec_stmt = $conn->prepare("
+            SELECT * FROM courses 
+            WHERE career_id = :cid 
+            ORDER BY course_id ASC
+        ");
+        $rec_stmt->execute([':cid' => $career_id]);
+        $recommended_courses = $rec_stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    // ✅ All other courses (except recommended ones)
+    if ($top_career && !empty($recommended_courses)) {
+        $other_stmt = $conn->prepare("
+            SELECT * FROM courses 
+            WHERE career_id != :cid OR career_id IS NULL
+            ORDER BY career_id ASC, course_id ASC
+        ");
+        $other_stmt->execute([':cid' => $top_career['career_id']]);
+        $all_courses = $other_stmt->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $other_stmt = $conn->query("SELECT * FROM courses ORDER BY career_id ASC, course_id ASC");
+        $all_courses = $other_stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 } catch (PDOException $e) {
     $all_courses = [];
+    $recommended_courses = [];
 }
 
 include 'includes/header.php';
@@ -44,8 +77,119 @@ include 'includes/header.php';
     .sidebar .nav-link:hover, .sidebar .nav-link.active { background: #e9ecef; color: #0d6efd; }
     .logout-section { border-top: 1px solid #eee; padding-top: 15px; }
     .main-content { flex: 1; padding: 30px; }
-    .course-card { border: none; border-radius: 12px; transition: transform 0.2s; background: white; }
-    .course-card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.06) !important; }
+    
+    /* ✅ Course Card */
+    .course-card { 
+        border: none; 
+        border-radius: 14px; 
+        transition: all 0.3s ease; 
+        background: white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+        border-left: 4px solid #0d6efd;
+        overflow: hidden;
+    }
+    .course-card:hover { 
+        transform: translateY(-5px); 
+        box-shadow: 0 12px 25px rgba(0,0,0,0.1) !important;
+    }
+    
+    /* ✅ Recommended Course Card — Highlight */
+    .course-card.recommended {
+        border-left: 4px solid #10b981;
+        background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+        box-shadow: 0 4px 20px rgba(16, 185, 129, 0.15);
+    }
+    .course-card.recommended:hover {
+        box-shadow: 0 12px 30px rgba(16, 185, 129, 0.25) !important;
+    }
+    
+    /* ✅ Badges */
+    .duration-badge {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        font-size: 0.75rem;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+    .fee-badge {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        font-size: 0.75rem;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+    .recommended-badge {
+        background: linear-gradient(135deg, #10b981, #047857);
+        color: white;
+        font-size: 0.7rem;
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    /* ✅ Course Title */
+    .course-title {
+        font-weight: 700;
+        color: #1a1d20;
+        font-size: 1.05rem;
+        line-height: 1.4;
+        margin-bottom: 10px;
+    }
+    
+    /* ✅ Search Button */
+    .btn-search {
+        background: linear-gradient(135deg, #0d6efd, #0a58ca);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 9px 20px;
+        border-radius: 8px;
+        transition: all 0.25s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 0.9rem;
+    }
+    .btn-search:hover {
+        background: linear-gradient(135deg, #0a58ca, #084298);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(13, 110, 253, 0.3);
+        color: white;
+    }
+    
+    /* ✅ Description */
+    .course-desc {
+        color: #6b7280;
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+    
+    /* ✅ Section Header */
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e5e7eb;
+        margin-bottom: 20px;
+    }
+    .section-header .icon-box {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+    }
 </style>
 
 <div class="main-wrapper">
@@ -89,50 +233,172 @@ include 'includes/header.php';
                 <p class="text-muted m-0 mt-1">Take high-quality courses here to develop your skills.</p>
             </div>
 
-            <!-- 🎯 Aptitude Test එක කරලා තියෙනවා නම් රෙකමන්ඩ් කරන කොටස -->
-            <?php if (!empty($user_result)): ?>
-                <div class="alert alert-success d-flex align-items-center rounded-3 p-3 mb-4" role="alert">
+            <!-- 🎯 Recommendation Section -->
+            <?php if ($top_career && $top_career['match_percentage'] > 0): ?>
+                <div class="alert alert-success d-flex align-items-center rounded-3 p-3 mb-4 border-0 shadow-sm" role="alert">
                     <i class="bi bi-stars fs-4 me-3"></i>
                     <div>
-                        Based on your test results, your recommended career path is <strong><?php echo htmlspecialchars($user_result['category']); ?></strong>. We suggest starting with the courses below!
+                        Based on your test results, your recommended career path is 
+                        <strong><?php echo htmlspecialchars($top_career['title']); ?></strong> 
+                        (<?php echo $top_career['match_percentage']; ?>% match). 
+                        We suggest starting with the courses below!
                     </div>
                 </div>
             <?php else: ?>
-                <div class="alert alert-warning d-flex align-items-center rounded-3 p-3 mb-4" role="alert">
+                <div class="alert alert-warning d-flex align-items-center rounded-3 p-3 mb-4 border-0 shadow-sm" role="alert">
                     <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
                     <div>
-                        You haven't taken the Aptitude Test yet <a href="aptitude_test.php" class="alert-link">Click Here ! </a> Take the test first. Then you can see the courses that best suit you.
+                        You haven't taken the Aptitude Test yet 
+                        <a href="aptitude_test.php" class="alert-link fw-bold">Click Here!</a> 
+                        Take the test first. Then you can see the courses that best suit you.
                     </div>
                 </div>
             <?php endif; ?>
 
-            <!-- 🗂️ කෝස් ලිස්ට් එක පෙන්වන කොටස -->
-            <h4 class="fw-bold text-dark mb-4 mt-2">Available Courses</h4>
+            <!-- ✅ SECTION 1: Recommended Courses (Highlight) -->
+            <?php if (!empty($recommended_courses)): ?>
+                <div class="section-header">
+                    <div class="icon-box bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-award-fill"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold text-dark m-0">Recommended For You</h4>
+                        <p class="text-muted small m-0">Courses tailored to your recommended career path</p>
+                    </div>
+                </div>
+                
+                <div class="row g-4 mb-5">
+                    <?php foreach ($recommended_courses as $course): ?>
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="course-card recommended h-100 p-4 d-flex flex-column">
+                                
+                                <!-- Recommended Badge -->
+                                <div class="mb-2">
+                                    <span class="recommended-badge">
+                                        <i class="bi bi-star-fill"></i> Recommended
+                                    </span>
+                                </div>
+                                
+                                <!-- Badges Row -->
+                                <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+                                    <?php if (!empty($course['duration']) && $course['duration'] !== 'NULL'): ?>
+                                        <span class="duration-badge">
+                                            <i class="bi bi-clock-fill me-1"></i>
+                                            <?php echo htmlspecialchars($course['duration']); ?>
+                                        </span>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (!empty($course['fee']) && $course['fee'] > 0): ?>
+                                        <span class="fee-badge">
+                                            <i class="bi bi-currency-exchange me-1"></i>
+                                            Rs. <?php echo number_format($course['fee'], 0); ?>
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                                
+                                <!-- Course Title -->
+                                <h5 class="course-title">
+                                    <?php echo htmlspecialchars($course['course_name']); ?>
+                                </h5>
+                                
+                                <!-- Course Description -->
+                                <p class="course-desc flex-grow-1 mb-3">
+                                    <?php echo htmlspecialchars($course['description']); ?>
+                                </p>
+                                
+                                <!-- Search Button -->
+                                <?php 
+                                    $search_url = !empty($course['url']) && $course['url'] !== 'NULL' 
+                                        ? $course['url'] 
+                                        : 'https://www.google.com/search?q=' . urlencode($course['course_name']);
+                                ?>
+                                <a href="<?php echo htmlspecialchars($search_url); ?>" 
+                                   target="_blank" 
+                                   rel="noopener noreferrer"
+                                   class="btn-search w-100 mt-2">
+                                    <i class="bi bi-search"></i>
+                                    Find This Course
+                                </a>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+
+            <!-- ✅ SECTION 2: All Other Courses -->
+            <div class="section-header">
+                <div class="icon-box bg-primary bg-opacity-10 text-primary">
+                    <i class="bi bi-collection-play-fill"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold text-dark m-0">
+                        <?php echo !empty($recommended_courses) ? 'Explore Other Courses' : 'Available Courses'; ?>
+                    </h4>
+                    <p class="text-muted small m-0">
+                        <?php echo !empty($recommended_courses) ? 'Browse courses from other career paths' : 'All available courses'; ?>
+                    </p>
+                </div>
+            </div>
+            
             <div class="row g-4">
                 <?php if (count($all_courses) > 0): ?>
                     <?php foreach ($all_courses as $course): ?>
                         <div class="col-12 col-md-6 col-lg-4">
-                            <div class="card h-100 shadow-sm p-3 course-card">
-                                <div class="card-body d-flex flex-column justify-content-between">
-                                    <div>
-                                        <span class="badge bg-success-subtle text-success mb-2"><i class="bi bi-clock"></i> <?php echo htmlspecialchars($course['duration'] ?? 'N/A'); ?></span>
-                                        <h5 class="card-title fw-bold text-dark mb-2"><?php echo htmlspecialchars($course['course_name']); ?></h5>
-                                        <p class="card-text text-muted small"><?php echo htmlspecialchars($course['description']); ?></p>
-                                    </div>
-                                    <div class="mt-3">
-                                        <?php 
-                                            $link = $course['url'] ?? $course['course_url'] ?? '#';
-                                        ?>
-                                        <a href="<?php echo htmlspecialchars($link); ?>" target="_blank" class="btn btn-success w-100">Start Learning <i class="bi bi-box-arrow-up-right ms-1"></i></a>
-                                    </div>
+                            <div class="course-card h-100 p-4 d-flex flex-column">
+                                
+                                <!-- Badges Row -->
+                                <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+                                    <?php if (!empty($course['duration']) && $course['duration'] !== 'NULL'): ?>
+                                        <span class="duration-badge">
+                                            <i class="bi bi-clock-fill me-1"></i>
+                                            <?php echo htmlspecialchars($course['duration']); ?>
+                                        </span>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (!empty($course['fee']) && $course['fee'] > 0): ?>
+                                        <span class="fee-badge">
+                                            <i class="bi bi-currency-exchange me-1"></i>
+                                            Rs. <?php echo number_format($course['fee'], 0); ?>
+                                        </span>
+                                    <?php endif; ?>
                                 </div>
+                                
+                                <!-- Course Title -->
+                                <h5 class="course-title">
+                                    <?php echo htmlspecialchars($course['course_name']); ?>
+                                </h5>
+                                
+                                <!-- Course Description -->
+                                <p class="course-desc flex-grow-1 mb-3">
+                                    <?php echo htmlspecialchars($course['description']); ?>
+                                </p>
+                                
+                                <!-- Search Button -->
+                                <?php 
+                                    $search_url = !empty($course['url']) && $course['url'] !== 'NULL' 
+                                        ? $course['url'] 
+                                        : 'https://www.google.com/search?q=' . urlencode($course['course_name']);
+                                ?>
+                                <a href="<?php echo htmlspecialchars($search_url); ?>" 
+                                   target="_blank" 
+                                   rel="noopener noreferrer"
+                                   class="btn-search w-100 mt-2">
+                                    <i class="bi bi-search"></i>
+                                    Find This Course
+                                </a>
                             </div>
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <div class="col-12">
-                        <div class="alert alert-secondary text-center">No courses have been added yet.</div>
-                    </div>
+                    <?php if (empty($recommended_courses)): ?>
+                        <div class="col-12">
+                            <div class="alert alert-secondary text-center py-5">
+                                <i class="bi bi-inbox fs-1 d-block mb-3 text-muted"></i>
+                                <h5 class="text-muted">No courses available yet.</h5>
+                                <p class="text-muted small mb-0">Please check back later.</p>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </main>

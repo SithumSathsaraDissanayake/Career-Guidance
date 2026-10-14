@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     exit();
 }
 
-// Payment Status Update කිරීමේ කොටස
+// Payment Status Update 
 if (isset($_GET['action']) && isset($_GET['id'])) {
     $payment_id = $_GET['id'];
     $status = ($_GET['action'] == 'approve') ? 'Approved' : 'Rejected';
@@ -26,7 +26,7 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
     }
 }
 
-// Payments Data ලබාගැනීම
+// Get Payments Data
 $payments = [];
 try {
     $query = "SELECT p.*, u.name as student_name, c.course_name 
@@ -37,12 +37,14 @@ try {
     $stmt = $conn->query($query);
     $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
-    // Payments Table එක නැතිනම් හෝ error එකක් ආවොත්
+    // If the Payments Table is missing or an error occurs
     $error_msg = $e->getMessage();
 }
 
 include 'includes/header.php';
+include 'includes/navbar.php'; 
 ?>
+
 
 <div class="container my-4">
     <h3 class="fw-bold mb-4">Manage Course Payments</h3>

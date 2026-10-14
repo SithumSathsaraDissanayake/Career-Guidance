@@ -1,8 +1,8 @@
 <?php
 session_start();
-include 'config/db.php'; // ඩේටාබේස් එක ලින්ක් කළා
+include 'config/db.php'; 
 
-// 🔐 පරිශීලකයා ශිෂ්‍යයෙක්ද කියා බැලීම
+// 🔐  Checking if the user is a student
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'student') {
     header("Location: login.php");
     exit();
@@ -12,38 +12,69 @@ $user_id = $_SESSION['user_id'];
 $success_msg = "";
 $error_msg = "";
 
-// 📅 Appointment Form එක Submit කළ පසු
+// 📅 Appointment Form after Submit
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['book_now'])) {
     $counselor_name = $_POST['counselor'];
     $appointment_date = $_POST['date'];
     $appointment_time = $_POST['time'];
     $reason = $_POST['reason'];
-    $status = 'pending'; // 🛠️ ඩේටාබේස් එකේ පවතින විදිහට 'pending' (small letters) ලෙස වෙනස් කළා
+    $status = 'pending'; // 🛠️ Changed to 'pending' (small letters) as it exists in the database.
 
     try {
-        // appointments ටේබල් එකට දත්ත ඇතුළත් කිරීමේ Query එක
-        $query = "INSERT INTO appointments (user_id, counselor_name, appointment_date, appointment_time, reason, status) 
-                  VALUES (:user_id, :counselor, :date, :time, :reason, :status)";
-        
-        $stmt = $conn->prepare($query);
-        $stmt->bindParam(':user_id', $user_id);
-        $stmt->bindParam(':counselor', $counselor_name);
-        $stmt->bindParam(':date', $appointment_date);
-        $stmt->bindParam(':time', $appointment_time);
-        $stmt->bindParam(':reason', $reason);
-        $stmt->bindParam(':status', $status);
+    
+// ✅ Get counselor_id from name (auto-extract)
+$counselor_id = null; // Default NULL
 
+try {
+    // Get the part of the name before "("
+    $name_parts = explode(' (', $counselor_name);
+    $just_name = trim($name_parts[0]);
+    
+    // ✅  get user_id from Users table (role = counselor/cgo)
+    $cidStmt = $conn->prepare("
+        SELECT user_id 
+        FROM users 
+        WHERE name = :n 
+          AND role IN ('counselor', 'cgo')
+        LIMIT 1
+    ");
+    $cidStmt->execute(['n' => $just_name]);
+    $cidResult = $cidStmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($cidResult) {
+        $counselor_id = $cidResult['user_id'];
+    }
+} catch (PDOException $e) {
+    $counselor_id = null;
+}
+
+// ✅ Insert query
+$query = "INSERT INTO appointments (user_id, counselor_name, counselor_id, appointment_date, appointment_time, reason, status) 
+          VALUES (:user_id, :counselor, :counselor_id, :date, :time, :reason, :status)";
+        
+$stmt = $conn->prepare($query);
+
+$stmt->bindParam(':user_id', $user_id);
+$stmt->bindParam(':counselor', $counselor_name);
+$stmt->bindParam(':counselor_id', $counselor_id);
+$stmt->bindParam(':date', $appointment_date);
+$stmt->bindParam(':time', $appointment_time);
+$stmt->bindParam(':reason', $reason);
+$stmt->bindParam(':status', $status);
         if ($stmt->execute()) {
-            $success_msg = "Your booking is successful! Wait for the consultant to confirm it.";
-        } else {
-            $error_msg = "An error occurred. Please try again.";
-        }
+    // ✅ POST/Redirect/GET Pattern — Duplicate prevent!
+    $_SESSION['booking_success'] = "Your booking is successful! Wait for the consultant to confirm it.";
+    header("Location: book_appointment.php");
+    exit();
+} else {
+    $error_msg = "An error occurred. Please try again.";
+}
     } catch (PDOException $e) {
         $error_msg = "Database Error: " . $e->getMessage();
     }
 }
 
-// 🗂️ මෙම ශිෂ්‍යයා දැනට දමා ඇති පැරණි Appointment විස්තර ලබාගැනීම
+// 🗂️ Retrieve the details of previous appointments currently made by this student.
 $my_appointments = [];
 try {
     $query = "SELECT * FROM appointments WHERE user_id = :user_id ORDER BY appointment_date DESC";
@@ -117,10 +148,30 @@ try {
                         <div class="mb-3">
                             <label class="form-label fw-semibold text-secondary">Select Counselor</label>
                             <select class="form-select py-2 rounded-2" name="counselor" required>
-                                <option value="" selected disabled>Choose a mentor</option>
-                                <option value="Mr. Sunil Perera (IT Sector)">Mr. Sunil Perera (IT Sector)</option>
-                                <option value="Mrs. K. Silva (Management Sector)">Mrs. K. Silva (Management Sector)</option>
-                                <option value="Dr. Rohan Dasanayaka (Engineering)">Dr. Rohan Dasanayaka (Engineering)</option>
+                                <option value="" selected disabled>Choose a counselor</option>
+                                <?php
+                                // ✅ Load real counselors from database
+                                try {
+                                    $counselor_stmt = $conn->query("
+                                        SELECT u.user_id, u.name, c.specialization 
+                                        FROM users u 
+                                        INNER JOIN counselors c ON u.user_id = c.user_id 
+                                        WHERE u.role IN ('counselor', 'cgo')
+                                        ORDER BY u.name ASC
+                                    ");
+                                    $counselors_list = $counselor_stmt->fetchAll(PDO::FETCH_ASSOC);
+                                    
+                                    foreach ($counselors_list as $c) {
+                                        $spec = !empty($c['specialization']) ? ' (' . htmlspecialchars($c['specialization']) . ')' : '';
+                                        echo '<option value="' . htmlspecialchars($c['name'] . $spec) . '">' 
+                                            . htmlspecialchars($c['name'] . $spec) 
+                                            . '</option>';
+                                    }
+                                } catch (PDOException $e) {
+                                    // Fallback — static options
+                                    echo '<option value="Mr. Sunil Perera (IT Sector)">Mr. Sunil Perera (IT Sector)</option>';
+                                }
+                                ?>
                             </select>
                         </div>
 
@@ -163,17 +214,17 @@ try {
                                     <th>Counselor</th>
                                     <th>Date/Time</th>
                                     <th>Status</th>
-                                    <th>Action</th> <!-- 👈 අලුතින් Action Column එකක් එකතු කළා -->
+                                    <th>Action</th> <!-- Action Column -->
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php if (count($my_appointments) > 0): ?>
                                     <?php foreach ($my_appointments as $app): ?>
                                         <?php 
-                                        // 🛠️ ඩේටාබේස් එකේ ඇති අගය කුඩා අකුරු (Lowercase) කර සංසන්දනය කිරීම
+                                        // 🛠️ Comparing the value in the database in lowercase
                                         $current_status = strtolower($app['status']); 
                                         
-                                        // Counselor ගේ ID එක (ඔයාගේ Table එකේ `counselor_id` එකක් නැත්නම් default එකක් ගන්නවා)
+                                        // Counselor's ID (if your table doesn't have a `counselor_id`, a default will be used)
                                         $counselor_id = isset($app['counselor_id']) ? $app['counselor_id'] : 1; 
                                         $appointment_id = isset($app['appointment_id']) ? $app['appointment_id'] : $app['id'];
                                         ?>
@@ -193,7 +244,7 @@ try {
                                                 <?php endif; ?>
                                             </td>
 
-                                            <!-- 🎯 Video Call සහ Chat බටන් එකතු කළ කොටස -->
+                                            <!-- 🎯 Video Call & Chat -->
                                             <td>
                                                 <?php if ($current_status == 'approved' || $current_status == 'confirmed'): ?>
                                                     <div class="d-flex flex-column gap-1">

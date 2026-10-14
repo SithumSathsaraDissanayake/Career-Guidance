@@ -1,8 +1,8 @@
 <?php
 session_start();
-include 'config/db.php'; // ඩේටාබේස් එක ලින්ක් කළා
+include 'config/db.php'; // Linked the database.
 
-// පරිශීලකයා ඇඩ්මින් කෙනෙක්ද කියා බැලීම
+// Checking if the user is an admin
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     header("Location: login.php");
     exit();
@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 
 $msg = "";
 
-// ➕ 1. අලුත් කෝස් එකක් එකතු කිරීම (Add Course)
+// ➕ 1. (Add Course)
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_course'])) {
     $course_name = $_POST['course_name'];
     $description = $_POST['description'];
@@ -37,7 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_course'])) {
     }
 }
 
-// ❌ 2. කෝස් එකක් ඉවත් කිරීම (Delete Course)
+// ❌ 2.(Delete Course)
 if (isset($_GET['delete_id'])) {
     $delete_id = $_GET['delete_id'];
 
@@ -55,7 +55,7 @@ if (isset($_GET['delete_id'])) {
     }
 }
 
-// 🗂️ පද්ධතියේ තියෙන සියලුම කෝස් ලිස්ට් එක ඩේටාබේස් එකෙන් ලබාගැනීම
+// 🗂️ Retrieving the list of all courses in the system from the database
 $all_courses = [];
 try {
     $query = "SELECT * FROM courses ORDER BY course_id DESC";
@@ -98,18 +98,45 @@ include 'includes/header.php';
     </nav>
 
     <div class="dashboard-container">
-        <!-- Sidebar -->
+        <!-- Sidebar Navigation -->
         <nav class="sidebar">
             <div>
                 <div class="text-center my-3">
-                    <h6 class="mt-2 fw-bold text-dark"><?php echo htmlspecialchars($_SESSION['user_name']); ?></h6>
+                    <h6 class="mt-2 fw-bold text-dark"><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'Administrator'); ?></h6>
                     <span class="badge bg-danger-subtle text-danger border border-danger">Administrator</span>
                 </div>
                 <hr>
                 <ul class="nav flex-column">
-                    <li class="nav-item"><a class="nav-link" href="admin_dashboard.php"><i class="bi bi-grid-1x2-fill"></i> Overview Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" href="manage_appointments.php"><i class="bi bi-calendar-check-fill"></i> Appointments</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="manage_courses.php"><i class="bi bi-book-half"></i> Manage Courses</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="admin_dashboard.php">
+                            <i class="bi bi-grid-1x2-fill"></i> Overview Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="manage_appointments.php">
+                            <i class="bi bi-calendar-check-fill"></i> Appointments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="manage_courses.php">
+                            <i class="bi bi-book-half"></i> Manage Courses
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="manage_jobs.php">
+                            <i class="bi bi-briefcase-fill"></i> Manage Job Vacancies
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="admin_payments.php">
+                            <i class="bi bi-receipt"></i> Course Payments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="admin_reports.php">
+                            <i class="bi bi-file-earmark-bar-graph-fill"></i> System Reports
+                        </a>
+                    </li>
                 </ul>
             </div>
             <div class="logout-section">
@@ -167,15 +194,15 @@ include 'includes/header.php';
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php if (!empty($courses)): ?>
-    <?php foreach ($courses as $course): ?>
+                                    <?php if (!empty($all_courses)): ?>
+    <?php foreach ($all_courses as $course): ?>
         <tr>
             <td>
                 <strong><?php echo htmlspecialchars($course['course_name']); ?></strong><br>
                 <small class="text-muted"><?php echo htmlspecialchars($course['description']); ?></small><br>
                 
-                <?php if (!empty($course['url'])): ?>
-                    <a href="<?php echo htmlspecialchars($course['url']); ?>" target="_blank" class="small text-decoration-none mt-1 d-inline-block">
+                <?php if (!empty($course['course_url'])): ?>
+    <a href="<?php echo htmlspecialchars($course['course_url']); ?>" target="_blank" class="small text-decoration-none mt-1 d-inline-block">
                         <i class="bi bi-link-45deg"></i> Visit Link
                     </a>
                 <?php endif; ?>
@@ -186,7 +213,7 @@ include 'includes/header.php';
             </td>
 
             <td>
-                <a href="manage_courses.php?delete=<?php echo $course['course_id']; ?>" 
+                <a href="manage_courses.php?delete_id=<?php echo $course['course_id']; ?>" 
                    class="btn btn-sm btn-outline-danger" 
                    onclick="return confirm('Are you sure you want to delete this course?')">
                    Delete

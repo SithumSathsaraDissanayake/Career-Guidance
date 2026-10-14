@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     exit();
 }
 
-// 📈 Summary Analytics Data ලබාගැනීම
+// 📈 Summaries Analytics Data 
 $total_students = $conn->query("SELECT COUNT(*) FROM users WHERE role = 'student'")->fetchColumn();
 $total_appointments = $conn->query("SELECT COUNT(*) FROM appointments")->fetchColumn();
 $approved_payments = $conn->query("SELECT SUM(amount) FROM payments WHERE status = 'Approved'")->fetchColumn() ?? 0;
@@ -23,6 +23,8 @@ $pending_payments = $conn->query("SELECT COUNT(*) FROM payments WHERE status = '
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </head>
 <body class="bg-light">
+
+        <?php include 'includes/navbar.php'; ?>
 
 <div class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-4">

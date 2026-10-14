@@ -30,6 +30,11 @@ $user_role = $_SESSION['user_role'] ?? 'student'; // Default fallback to student
                     <li class="nav-item">
                         <a class="nav-link" href="view_jobs.php">View Vacancies</a>
                     </li>
+                    <li class="nav-item ms-1">
+                        <button id="darkModeToggle" class="btn btn-dark bg-opacity-50 border border-secondary border-opacity-25 text-white rounded-circle p-2 shadow-sm" title="Toggle Theme" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <i id="darkModeIcon" class="bi bi-moon-fill"></i>
+                        </button>
+                    </li>
 
                 <?php elseif ($user_role === 'admin' || $user_role === 'company'): ?>
                     <!-- Admin / Company Specific Links -->
@@ -41,6 +46,11 @@ $user_role = $_SESSION['user_role'] ?? 'student'; // Default fallback to student
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="view_applications.php">View Applications</a>
+                    </li>
+                    <li class="nav-item ms-1">
+                        <button id="darkModeToggle" class="btn btn-dark bg-opacity-50 border border-secondary border-opacity-25 text-white rounded-circle p-2 shadow-sm" title="Toggle Theme" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <i id="darkModeIcon" class="bi bi-moon-fill"></i>
+                        </button>
                     </li>
                 <?php endif; ?>
 

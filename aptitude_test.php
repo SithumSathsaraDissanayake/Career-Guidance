@@ -1,8 +1,8 @@
 <?php
 session_start();
-include 'config/db.php'; // ඩේටාබේස් එක නිවැරදිව සම්බන්ධ කළා
+include 'config/db.php';
 
-// 🔐 පරිශීලකයා ශිෂ්‍යයෙක්ද කියා බැලීම
+// 🔐 Checking if the user is a student
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'student') {
     header("Location: login.php");
     exit();
@@ -12,23 +12,27 @@ $show_results = false;
 $suggested_career = "";
 $career_description = "";
 
-// 🌐 භාෂාව තෝරාගැනීම (Default: English)
+// 🌐 Language selection
 $lang = isset($_GET['lang']) ? $_GET['lang'] : 'en';
 if (!in_array($lang, ['en', 'si', 'ta'])) {
     $lang = 'en';
 }
 
-// 📊 ශිෂ්‍යයා උත්තර ටික Submit කළ පසු ක්‍රියාත්මක වන කොටස
+// 📊 After the student submits the answers
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_test'])) {
     $scores = [
         'it' => 0,
         'engineering' => 0,
         'management' => 0,
-        'design' => 0
+        'healthcare' => 0,
+        'construction' => 0,
+        'design' => 0,
+        'agriculture' => 0,
+        'education' => 0
     ];
 
-    // ප්‍රශ්න 10යේ පිළිතුරු එකතු කර ලකුණු ගණනය කිරීම
-    for ($i = 1; $i <= 10; $i++) {
+    // ප්‍Adding up the answers to the 20 questions and calculating the score
+    for ($i = 1; $i <= 20; $i++) {
         if (isset($_POST["q$i"])) {
             $answer = $_POST["q$i"];
             if (array_key_exists($answer, $scores)) {
@@ -37,38 +41,62 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_test'])) {
         }
     }
 
-    // වැඩිම ලකුණු ලැබී ඇති ක්ෂේත්‍රය සෙවීම
+    // Find the field with the highest score
     arsort($scores);
     $top_career = key($scores);
 
-    // 💡 ප්‍රතිඵලය අනුව Career Path එක තීරණය කිරීම (භාෂාව අනුව)
+    // 💡 Determining the Career Path Based on the Result (Language-wise)
     if ($lang == 'si') {
         if ($top_career == 'it') {
             $suggested_career = "Information Technology & Software Engineering 💻";
-            $career_description = "ඔබට තර්කානුකූලව සිතීමේ සහ ගැටලු විසඳීමේ (Problem Solving) ඉහළ හැකියාවක් ඇත. මෘදුකාංග ඉංජිනේරු විද්‍යාව (Software Engineering), දත්ත විශ්ලේෂණය (Data Science), හෝ වෙබ් සංවර්ධනය (Web Development) වැනි ක්ෂේත්‍ර ඔබට වඩාත්ම ගැළපේ.";
+            $career_description = "ඔබට තර්කානුකූලව සිතීමේ සහ ගැටලු විසඳීමේ ඉහළ හැකියාවක් ඇත. මෘදුකාංග ඉංජිනේරු විද්‍යාව, දත්ත විශ්ලේෂණය, හෝ වෙබ් සංවර්ධනය වැනි ක්ෂේත්‍ර ඔබට වඩාත්ම ගැළපේ.";
         } elseif ($top_career == 'engineering') {
             $suggested_career = "Engineering & Technical Fields 🛠️";
-            $career_description = "ඔබ උපකරණ ක්‍රියාකාරීත්වය, තාක්ෂණික නිර්මාණ සහ භෞතික පද්ධති පිළිබඳව උනන්දුවක් දක්වයි. සිවිල්, යාන්ත්‍රික, හෝ විද්‍යුත් ඉංජිනේරු ක්ෂේත්‍ර මෙන්ම රොබොටික්ස් වැනි නවීන තාක්ෂණික අංශ ඔබට ගැළපේ.";
+            $career_description = "ඔබ උපකරණ ක්‍රියාකාරීත්වය, තාක්ෂණික නිර්මාණ සහ භෞතික පද්ධති පිළිබඳව උනන්දුවක් දක්වයි. සිවිල්, යාන්ත්‍රික, හෝ විද්‍යුත් ඉංජිනේරු ක්ෂේත්‍ර ඔබට ගැළපේ.";
         } elseif ($top_career == 'management') {
             $suggested_career = "Business Management & Entrepreneurship 📊";
-            $career_description = "ඔබ සන්නිවේදනයට, නායකත්වයට සහ සැලසුම් සකස් කිරීමට දක්ෂයෙකි. ව්‍යාපාර කළමනාකරණය (Business Administration), මානව සම්පත් (HR), අලෙවිකරණය (Marketing) හෝ තමන්ගේම ව්‍යාපාරයක් ඇරඹීම (Entrepreneurship) ඔබට සුදුසුය.";
+            $career_description = "ඔබ සන්නිවේදනයට, නායකත්වයට සහ සැලසුම් සකස් කිරීමට දක්ෂයෙකි. ව්‍යාපාර කළමනාකරණය, මානව සම්පත්, අලෙවිකරණය හෝ ව්‍යාපාරයක් ඇරඹීම ඔබට සුදුසුය.";
+        } elseif ($top_career == 'healthcare') {
+            $suggested_career = "Healthcare & Medical Services 🏥";
+            $career_description = "ඔබට මිනිසුන්ට උපකාර කිරීමට සහ රෝගී සත්කාර කිරීමට උනන්දුවක් ඇත. හෙද සේවය, වෛද්‍ය රසායනාගාර, හෝ සෞඛ්‍ය පරිපාලන ක්ෂේත්‍ර ඔබට ගැළපේ.";
+        } elseif ($top_career == 'construction') {
+            $suggested_career = "Construction & Infrastructure 🏗️";
+            $career_description = "ඔබ ගොඩනැගිලි ඉදිකිරීම්, ප්‍රමාණ සමීක්ෂණය සහ ඉදිකිරීම් කළමනාකරණයට උනන්දුවක් දක්වයි. Quantity Surveyor, Site Supervisor හෝ Construction Manager වෘත්තීය මාවත් ඔබට ගැළපේ.";
+        } elseif ($top_career == 'agriculture') {
+            $suggested_career = "Agriculture & Agribusiness 🌾";
+            $career_description = "ඔබ කෘෂිකර්මය, බෝග වගාව සහ ගොවිපල කළමනාකරණයට උනන්දුවක් දක්වයි. කෘෂිකර්ම නිලධාරී, ගොවිපල කළමනාකරු හෝ කෘෂි ව්‍යාපාරික ක්ෂේත්‍ර ඔබට ගැළපේ.";
+        } elseif ($top_career == 'education') {
+            $suggested_career = "Education & Teaching 📚";
+            $career_description = "ඔබ දැනුම බෙදාගැනීමට සහ අනිත් අයට උගන්වන්නට උනන්දුවක් දක්වයි. ගුරු වෘත්තිය, අධ්‍යාපන උපදේශනය හෝ පුහුණු ක්ෂේත්‍ර ඔබට ගැළපේ.";
         } else {
             $suggested_career = "Creative Arts & Digital Design 🎨";
-            $career_description = "ඔබ ඉතා නිර්මාණශීලී, අලුත් විදිහට හිතන කෙනෙකි. UI/UX Design, Graphic Design, Digital Marketing, හෝ බහුමාධ්‍ය (Multimedia) ක්ෂේත්‍ර ඔස්සේ ඔබට ඉතා ඉහළ ගමනක් යා හැක.";
+            $career_description = "ඔබ ඉතා නිර්මාණශීලී, අලුත් විදිහට හිතන කෙනෙකි. UI/UX Design, Graphic Design, Digital Marketing, හෝ Multimedia ක්ෂේත්‍ර ඔස්සේ ඔබට ඉහළ ගමනක් යා හැක.";
         }
     } elseif ($lang == 'ta') {
         if ($top_career == 'it') {
             $suggested_career = "Information Technology & Software Engineering 💻";
-            $career_description = "நீங்கள் தர்க்கரீதியாக சிந்திக்கவும் பிரச்சினைகளைத் தீர்க்கவும் அதிக திறன் கொண்டவர். மென்பொருள் பொறியியல் (Software Engineering), தரவு அறிவியல் (Data Science), அல்லது வலை மேம்பாடு (Web Development) போன்ற துறைகள் உங்களுக்கு மிகவும் பொருத்தமானவை.";
+            $career_description = "நீங்கள் தர்க்கரீதியாக சிந்திக்கவும் பிரச்சினைகளைத் தீர்க்கவும் அதிக திறன் கொண்டவர். மென்பொருள் பொறியியல், தரவு அறிவியல், அல்லது வலை மேம்பாடு போன்ற துறைகள் உங்களுக்கு பொருத்தமானவை.";
         } elseif ($top_career == 'engineering') {
             $suggested_career = "Engineering & Technical Fields 🛠️";
-            $career_description = "நீங்கள் சாதனங்களின் செயல்பாடு, தொழில்நுட்ப வடிவமைப்புகள் மற்றும் இயற்பியல் அமைப்புகளில் ஆர்வம் காட்டுகிறீர்கள். சிவில், இயந்திர, அல்லது மின் பொறியியல் துறைகள் மற்றும் ரோபோட்டிக்ஸ் போன்ற நவீன தொழில்நுட்பப் பிரிவுகள் உங்களுக்கு பொருத்தமானவை.";
+            $career_description = "நீங்கள் சாதனங்களின் செயல்பாடு, தொழில்நுட்ப வடிவமைப்புகள் மற்றும் இயற்பியல் அமைப்புகளில் ஆர்வம் காட்டுகிறீர்கள். சிவில், இயந்திர, அல்லது மின் பொறியியல் போன்ற துறைகள் பொருத்தமானவை.";
         } elseif ($top_career == 'management') {
             $suggested_career = "Business Management & Entrepreneurship 📊";
-            $career_description = "நீங்கள் தொடர்பு, தலைமைத்துவம் மற்றும் திட்டமிடலில் திறமையானவர். வணிக மேலாண்மை (Business Administration), மனித வளம் (HR), சந்தைப்படுத்தல் (Marketing) அல்லது சொந்த வணிகத்தைத் தொடங்குதல் (Entrepreneurship) உங்களுக்கு பொருத்தமானது.";
+            $career_description = "நீங்கள் தொடர்பு, தலைமைத்துவம் மற்றும் திட்டமிடலில் திறமையானவர். வணிக மேலாண்மை, மனித வளம், சந்தைப்படுத்தல் அல்லது சொந்த வணிகத்தைத் தொடங்குதல் பொருத்தமானது.";
+        } elseif ($top_career == 'healthcare') {
+            $suggested_career = "Healthcare & Medical Services 🏥";
+            $career_description = "மக்களுக்கு உதவுவதிலும் நோயாளி பராமரிப்பிலும் உங்களுக்கு ஆர்வம் உள்ளது. செவிலியம், மருத்துவ ஆய்வகம் அல்லது சுகாதார நிர்வாகத் துறைகள் பொருத்தமானவை.";
+        } elseif ($top_career == 'construction') {
+            $suggested_career = "Construction & Infrastructure 🏗️";
+            $career_description = "கட்டுமானம், அளவு ஆய்வு மற்றும் கட்டுமான மேலாண்மையில் உங்களுக்கு ஆர்வம் உள்ளது. Quantity Surveyor, Site Supervisor அல்லது Construction Manager பாதைகள் பொருத்தமானவை.";
+        } elseif ($top_career == 'agriculture') {
+            $suggested_career = "Agriculture & Agribusiness 🌾";
+            $career_description = "விவசாயம், பயிர் வளர்ப்பு மற்றும் பண்ணை நிர்வாகத்தில் உங்களுக்கு ஆர்வம் உள்ளது. விவசாய அதிகாரி, பண்ணை மேலாளர் அல்லது விவசாய வணிகத் துறைகள் பொருத்தமானவை.";
+        } elseif ($top_career == 'education') {
+            $suggested_career = "Education & Teaching 📚";
+            $career_description = "அறிவைப் பகிர்ந்து கொள்வதிலும் மற்றவர்களுக்குக் கற்பிப்பதிலும் உங்களுக்கு ஆர்வம் உள்ளது. ஆசிரியர், கல்வி ஆலோசகர் அல்லது பயிற்சித் துறைகள் பொருத்தமானவை.";
         } else {
             $suggested_career = "Creative Arts & Digital Design 🎨";
-            $career_description = "நீங்கள் மிகவும் படைப்பாற்றல் மிக்கவர், புதிய வழியில் சிந்திக்கும் நபர். UI/UX Design, Graphic Design, Digital Marketing, அல்லது Multimedia துறைகள் மூலம் நீங்கள் மிக உயர்ந்த நிலைக்குச் செல்ல முடியும்.";
+            $career_description = "நீங்கள் மிகவும் படைப்பாற்றல் மிக்கவர். UI/UX Design, Graphic Design, Digital Marketing, அல்லது Multimedia துறைகள் மூலம் மிக உயர்ந்த நிலைக்குச் செல்ல முடியும்.";
         }
     } else {
         if ($top_career == 'it') {
@@ -76,106 +104,55 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_test'])) {
             $career_description = "You have a high ability to think logically and solve problems. Fields like Software Engineering, Data Science, or Web Development are best suited for you.";
         } elseif ($top_career == 'engineering') {
             $suggested_career = "Engineering & Technical Fields 🛠️";
-            $career_description = "You are interested in how devices work, technical designs, and physical systems. Civil, Mechanical, or Electrical Engineering as well as modern technical fields like Robotics are suitable for you.";
+            $career_description = "You are interested in how devices work, technical designs, and physical systems. Civil, Mechanical, or Electrical Engineering are suitable for you.";
         } elseif ($top_career == 'management') {
             $suggested_career = "Business Management & Entrepreneurship 📊";
-            $career_description = "You are skilled in communication, leadership, and planning. Business Administration, Human Resources (HR), Marketing, or starting your own business (Entrepreneurship) are suitable for you.";
+            $career_description = "You are skilled in communication, leadership, and planning. Business Administration, HR, Marketing, or Entrepreneurship are suitable for you.";
+        } elseif ($top_career == 'healthcare') {
+            $suggested_career = "Healthcare & Medical Services 🏥";
+            $career_description = "You are interested in helping people and providing patient care. Nursing, Medical Laboratory, or Healthcare Administration are suitable for you.";
+        } elseif ($top_career == 'construction') {
+            $suggested_career = "Construction & Infrastructure 🏗️";
+            $career_description = "You are interested in construction, quantity surveying, and construction management. Quantity Surveyor, Site Supervisor, or Construction Manager paths are suitable for you.";
+        } elseif ($top_career == 'agriculture') {
+            $suggested_career = "Agriculture & Agribusiness 🌾";
+            $career_description = "You are interested in agriculture, crop management, and farm management. Agricultural Officer, Farm Manager, or Agribusiness roles are suitable for you.";
+        } elseif ($top_career == 'education') {
+            $suggested_career = "Education & Teaching 📚";
+            $career_description = "You are interested in sharing knowledge and teaching others. Teaching, Educational Counseling, or Training roles are suitable for you.";
         } else {
             $suggested_career = "Creative Arts & Digital Design 🎨";
-            $career_description = "You are very creative and think in new ways. You can go very far through fields like UI/UX Design, Graphic Design, Digital Marketing, or Multimedia.";
+            $career_description = "You are very creative and think in new ways. UI/UX Design, Graphic Design, Digital Marketing, or Multimedia are suitable for you.";
         }
     }
 
-        
-        $show_results = true;
+    $show_results = true;
 
-// 💾 SAVE TO DATABASE
-try {
-    $categoryToCareerId = [
-        'it' => 1,
-        'engineering' => 8,
-        'management' => 11,
-        'design' => 17
-    ];
-    
-    $deleteStmt = $conn->prepare("DELETE FROM aptitude_results WHERE user_id = :uid");
-    $deleteStmt->execute(['uid' => $_SESSION['user_id']]);
-    
-    $insertStmt = $conn->prepare(
-        "INSERT INTO aptitude_results (user_id, career_id, score) 
-         VALUES (:uid, :cid, :score)"
-    );
-    
-    foreach ($scores as $category => $score) {
-        if (isset($categoryToCareerId[$category])) {
-            $normalizedScore = min(100, $score * 10);
-            $insertStmt->execute([
-                'uid' => $_SESSION['user_id'],
-                'cid' => $categoryToCareerId[$category],
-                'score' => $normalizedScore
-            ]);
-        }
-    }
-    
-    // Skills save
-    $skillMap = [
-        'it' => ['Programming', 'Web Development', 'Database Management'],
-        'engineering' => ['AutoCAD', 'Technical Drawing', 'Structural Analysis'],
-        'management' => ['Accounting', 'Financial Analysis', 'Project Management'],
-        'design' => ['Graphic Design', 'UI/UX Design', 'Digital Illustration']
-    ];
-    
-    $delSkills = $conn->prepare("DELETE FROM user_skills WHERE user_id = :uid");
-    $delSkills->execute(['uid' => $_SESSION['user_id']]);
-    
-    $insSkill = $conn->prepare(
-        "INSERT INTO user_skills (user_id, skill_name) VALUES (:uid, :skill)"
-    );
-    
-    arsort($scores);
-    $topCategories = array_slice(array_keys($scores), 0, 2);
-    
-    foreach ($topCategories as $cat) {
-        if (isset($skillMap[$cat])) {
-            foreach ($skillMap[$cat] as $skill) {
-                $insSkill->execute([
-                    'uid' => $_SESSION['user_id'],
-                    'skill' => $skill
-                ]);
-            }
-        }
-    }
-    
-} catch (PDOException $e) {
-    error_log("Aptitude save error: " . $e->getMessage());
-}
-
-// ... save code ...
-
-    // 💾 SAVE TO DATABASE - මෙතන ඉඳන් අලුත් code එක
+    // 💾 SAVE TO DATABASE
     try {
+        // Category → Career ID Map
         $categoryToCareerId = [
-    'it' => 1,           // Software Engineer
-    'engineering' => 8,  // Civil Engineer
-    'management' => 11,  // Business Analyst
-    'design' => 17       // Graphic Designer
-];
+            'it' => 1,
+            'engineering' => 2,
+            'management' => 3,
+            'healthcare' => 4,
+            'construction' => 5,
+            'design' => 6,
+            'agriculture' => 7,
+            'education' => 8
+        ];
         
-        // පරණ aptitude results delete කරන්න (re-take කරන විට)
         $deleteStmt = $conn->prepare("DELETE FROM aptitude_results WHERE user_id = :uid");
         $deleteStmt->execute(['uid' => $_SESSION['user_id']]);
         
-        // අලුත් results insert කරන්න
-        $insertStmt = $conn->prepare(
-            "INSERT INTO aptitude_results (user_id, career_id, score) 
-             VALUES (:uid, :cid, :score)"
-        );
+        $insertStmt = $conn->prepare("
+            INSERT INTO aptitude_results (user_id, career_id, score) 
+            VALUES (:uid, :cid, :score)
+        ");
         
         foreach ($scores as $category => $score) {
             if (isset($categoryToCareerId[$category])) {
-                // Test එකේ ප්‍රශ්න 10යි → score 0-10 අතර
-                // එය 0-100 දක්වා normalize කරන්න (× 10)
-                $normalizedScore = min(100, $score * 10);
+                $normalizedScore = min(100, $score * 5);  // 20 questions → score 0-20 → × 5 = 0-100
                 
                 $insertStmt->execute([
                     'uid' => $_SESSION['user_id'],
@@ -185,307 +162,137 @@ try {
             }
         }
         
-        // 🎯 AUTO-SAVE user skills from test categories
-       $skillMap = [
-    'it' => ['java', 'php', 'sql', 'problem solving'],
-    'engineering' => ['python', 'sql', 'excel', 'statistics'],
-    'management' => ['networking', 'linux', 'security', 'python'],
-    'design' => ['html', 'css', 'javascript', 'creativity']
-
+        // 💾 Skills save
+        $skillMap = [
+            'it' => ['Programming', 'Web Development', 'Database Management'],
+            'engineering' => ['AutoCAD', 'Technical Drawing', 'Structural Analysis'],
+            'management' => ['Accounting', 'Financial Analysis', 'Project Management'],
+            'healthcare' => ['Patient Care', 'Medical Laboratory Techniques', 'First Aid'],
+            'construction' => ['Quantity Surveying', 'Construction Technology', 'Surveying'],
+            'design' => ['Graphic Design', 'UI/UX Design', 'Digital Illustration'],
+            'agriculture' => ['Crop Management', 'Farm Management', 'Irrigation Techniques'],
+            'education' => ['Lesson Planning', 'Classroom Management', 'Educational Technology']
         ];
         
-        // පරණ skills delete කරන්න
         $delSkills = $conn->prepare("DELETE FROM user_skills WHERE user_id = :uid");
         $delSkills->execute(['uid' => $_SESSION['user_id']]);
         
-        // අලුත් skills insert කරන්න (top 2 categories වලින්)
-        $insSkill = $conn->prepare(
-            "INSERT INTO user_skills (user_id, skill_name) VALUES (:uid, :skill)"
-        );
+        $insSkill = $conn->prepare("INSERT INTO user_skills (user_id, skill_name) VALUES (:uid, :skill)");
         
-        arsort($scores); // වැඩිම scores ඉස්සරහට
+        arsort($scores);
         $topCategories = array_slice(array_keys($scores), 0, 2);
         
         foreach ($topCategories as $cat) {
             if (isset($skillMap[$cat])) {
                 foreach ($skillMap[$cat] as $skill) {
-                    $insSkill->execute([
-                        'uid' => $_SESSION['user_id'],
-                        'skill' => $skill
-                    ]);
+                    $insSkill->execute(['uid' => $_SESSION['user_id'], 'skill' => $skill]);
                 }
             }
         }
         
-        // 🎓 Academic data save කරන්න (default "IT", 3.0 GPA)
-        // Profile page එකක් හදලා පසුව update කරන්න පුළුවන්
-        $checkAcademic = $conn->prepare(
-            "SELECT id FROM student_academic WHERE user_id = :uid"
-        );
+        // Academic save
+        $checkAcademic = $conn->prepare("SELECT id FROM student_academic WHERE user_id = :uid");
         $checkAcademic->execute(['uid' => $_SESSION['user_id']]);
         
         if (!$checkAcademic->fetch()) {
-            $insAcademic = $conn->prepare(
-                "INSERT INTO student_academic (user_id, stream, gpa) 
-                 VALUES (:uid, 'IT', 3.0)"
-            );
+            $insAcademic = $conn->prepare("
+                INSERT INTO student_academic (user_id, stream, gpa) 
+                VALUES (:uid, 'IT', 3.0)
+            ");
             $insAcademic->execute(['uid' => $_SESSION['user_id']]);
         }
         
     } catch (PDOException $e) {
-        // Error log කරන්න, ඒත් user ට පෙන්නන්න එපා
         error_log("Aptitude save error: " . $e->getMessage());
     }
-    // 💾 SAVE END - අලුත් code එක මෙතනින් ඉවරයි
 }
 
-// 🌐 භාෂාවට අනුව ප්‍රශ්න සහ පිළිතුරු
+// 🌐 Questions and answers by language
 $questions = [];
 
 if ($lang == 'si') {
+    // SINHALA — 20 ප්‍රශ්න
     $questions = [
-        1 => [
-            'question' => 'ඔබ වඩාත්ම ප්‍රිය කරන්නේ කුමන ආකාරයේ ගැටලු විසඳීමටද?',
-            'answers' => [
-                'it' => 'ගණිතමය හෝ පරිගණක කේතයන්හි (Code) ඇති ගැටලු විසඳීම',
-                'management' => 'මිනිසුන් අතර ඇතිවන ගැටලු සහ ව්‍යාපාරික ගැටලු විසඳීම',
-                'design' => 'නිර්මාණශීලී අදහස් හෝ මෝස්තර පිළිබඳ ගැටලු විසඳීම'
-            ]
-        ],
-        2 => [
-            'question' => 'ඔබ නිදහස් වේලාවකදී වැඩිපුරම කිරීමට කැමති කුමක්ද?',
-            'answers' => [
-                'engineering' => 'විද්‍යුත් උපකරණ හෝ යාන්ත්‍රික මෙවලම් ගලවා සකස් කිරීම',
-                'it' => 'අලුත් ඇප්ස් (Apps), වෙබ් අඩවි හෝ තාක්ෂණික තොරතුරු සෙවීම',
-                'design' => 'ඡායාරූපකරණය, චිත්‍ර ඇඳීම හෝ වීඩියෝ සංස්කරණය කිරීම'
-            ]
-        ],
-        3 => [
-            'question' => 'සමූහ ව්‍යාපෘතියකදී (Group Project) ඔබ නිතරම භාරගන්නා භූමිකාව කුමක්ද?',
-            'answers' => [
-                'management' => 'කණ්ඩායම මෙහෙයවීම සහ වැඩ කොටස් බෙදා දීම (Leader)',
-                'it' => 'ප්‍රධාන තාක්ෂණික වැඩ කොටස හෝ ගණනය කිරීම් සිදු කිරීම',
-                'design' => 'ප්‍රොජෙක්ට් එකේ Presentation එක ලස්සනට නිර්මාණය කිරීම'
-            ]
-        ],
-        4 => [
-            'question' => 'අලුත් වෙබ් අඩවියක් දුටු විට ඔබේ අවධානය මුලින්ම යොමු වන්නේ කුමකටද?',
-            'answers' => [
-                'design' => 'එහි ඇති වර්ණ, පෙනුම සහ ලස්සන (Layout & Visuals)',
-                'it' => 'එහි වේගය සහ එය ක්‍රියාකරන ආකාරය (Features & Speed)',
-                'management' => 'එම වෙබ් අඩවියෙන් කරන ව්‍යාපාරය හෝ සේවාව කුමක්ද යන්න'
-            ]
-        ],
-        5 => [
-            'question' => 'පරිගණක භාෂා (Java, Python, PHP) ඉගෙන ගැනීමට ඔබ තුළ උනන්දුවක් පවතීද?',
-            'answers' => [
-                'it' => 'ඔව්, ඉතාමත් කැමතියි',
-                'management' => 'නැත, මම වඩා කැමති කළමනාකරණ අංශයටයි'
-            ]
-        ],
-        6 => [
-            'question' => 'යන්ත්‍ර සූත්‍ර හෝ ගොඩනැගිලි සැලසුම් (Blueprints) පිළිබඳව හැදෑරීමට ඔබ කැමතිද?',
-            'answers' => [
-                'engineering' => 'ඔව්, ඒ පිළිබඳ තාක්ෂණික දැනුමට මම ප්‍රිය කරමි',
-                'design' => 'නැත, මම වඩා කැමති කලාත්මක නිර්මාණ කිරීමටයි'
-            ]
-        ],
-        7 => [
-            'question' => 'සමාජ මාධ්‍ය (Social Media) සඳහා ලෝගෝ (Logos) සහ පෝස්ටර් නිර්මාණයට ඔබ දක්ෂද?',
-            'answers' => [
-                'design' => 'ඔව්, මට ඒ සඳහා හොඳ නිර්මාණශීලී හැකියාවක් ඇත',
-                'it' => 'නැත, මම කැමති එහි පසුබිම් කේතකරණයටයි (Coding)'
-            ]
-        ],
-        8 => [
-            'question' => 'නව තාක්ෂණික උපකරණයක් වෙළඳපොලට ආ විට ඔබ මුලින්ම කරන්නේ කුමක්ද?',
-            'answers' => [
-                'it' => 'එහි Operating System එක සහ Specs පිළිබඳව සෙවීම',
-                'management' => 'එහි මිල, වෙළඳපල ඉල්ලුම සහ ලාභය පිළිබඳව සිතීම'
-            ]
-        ],
-        9 => [
-            'question' => 'අනාගතයේදී ඔබ වීමට වඩාත්ම කැමති කවුරුන් වීමටද?',
-            'answers' => [
-                'management' => 'ප්‍රධාන කළමනාකාරවරයෙක් (Manager) හෝ ව්‍යාපාරිකයෙක්',
-                'it' => 'ප්‍රධාන මෘදුකාංග ඉංජිනේරුවරයෙක් (Tech Lead/Engineer)'
-            ]
-        ],
-        10 => [
-            'question' => 'ඔබ වැඩක් කිරීමට වඩාත්ම කැමති කුමනාකාර පරිසරයකද?',
-            'answers' => [
-                'management' => 'මිනිසුන් සමඟ නිතරම අදහස් හුවමාරු කරගත හැකි කාර්යාලයක',
-                'engineering' => 'වැඩබිමක (Field) හෝ පර්යේෂණාගාරයක'
-            ]
-        ]
+        1 => ['question' => 'ඔබ වඩාත්ම ප්‍රිය කරන්නේ කුමන ආකාරයේ ගැටලු විසඳීමටද?', 'answers' => ['it' => 'ගණිතමය හෝ පරිගණක කේතයන්හි ගැටලු', 'management' => 'මිනිසුන් අතර ඇතිවන ගැටලු සහ ව්‍යාපාරික ගැටලු', 'design' => 'නිර්මාණශීලී අදහස් හෝ මෝස්තර පිළිබඳ ගැටලු']],
+        2 => ['question' => 'ඔබ නිදහස් වේලාවකදී වැඩිපුරම කිරීමට කැමති කුමක්ද?', 'answers' => ['engineering' => 'විද්‍යුත් උපකරණ හෝ යාන්ත්‍රික මෙවලම් ගලවා සකස් කිරීම', 'it' => 'අලුත් ඇප්ස්, වෙබ් අඩවි හෝ තාක්ෂණික තොරතුරු සෙවීම', 'design' => 'ඡායාරූපකරණය, චිත්‍ර ඇඳීම හෝ වීඩියෝ සංස්කරණය']],
+        3 => ['question' => 'සමූහ ව්‍යාපෘතියකදී ඔබ නිතරම භාරගන්නා භූමිකාව කුමක්ද?', 'answers' => ['management' => 'කණ්ඩායම මෙහෙයවීම සහ වැඩ කොටස් බෙදා දීම', 'it' => 'ප්‍රධාන තාක්ෂණික වැඩ කොටස හෝ ගණනය කිරීම්', 'design' => 'ප්‍රොජෙක්ට් එකේ Presentation එක ලස්සනට නිර්මාණය කිරීම']],
+        4 => ['question' => 'අලුත් වෙබ් අඩවියක් දුටු විට ඔබේ අවධානය මුලින්ම යොමු වන්නේ කුමකටද?', 'answers' => ['design' => 'එහි ඇති වර්ණ, පෙනුම සහ ලස්සන', 'it' => 'එහි වේගය සහ එය ක්‍රියාකරන ආකාරය', 'management' => 'එම වෙබ් අඩවියෙන් කරන ව්‍යාපාරය හෝ සේවාව']],
+        5 => ['question' => 'පරිගණක භාෂා (Java, Python, PHP) ඉගෙන ගැනීමට ඔබ තුළ උනන්දුවක් පවතීද?', 'answers' => ['it' => 'ඔව්, ඉතාමත් කැමතියි', 'management' => 'නැත, මම වඩා කැමති කළමනාකරණ අංශයටයි', 'design' => 'නැත, මම වඩා කැමති නිර්මාණශීලී වැඩ වලටයි']],
+        6 => ['question' => 'යන්ත්‍ර සූත්‍ර හෝ ගොඩනැගිලි සැලසුම් පිළිබඳව හැදෑරීමට ඔබ කැමතිද?', 'answers' => ['engineering' => 'ඔව්, තාක්ෂණික දැනුමට මම ප්‍රිය කරමි', 'construction' => 'ඔව්, ඉදිකිරීම් කටයුතු වලට මම කැමතියි', 'design' => 'නැත, මම වඩා කැමති කලාත්මක නිර්මාණ කිරීමටයි']],
+        7 => ['question' => 'සමාජ මාධ්‍ය සඳහා ලෝගෝ සහ පෝස්ටර් නිර්මාණයට ඔබ දක්ෂද?', 'answers' => ['design' => 'ඔව්, මට හොඳ නිර්මාණශීලී හැකියාවක් ඇත', 'it' => 'නැත, මම කැමති පසුබිම් කේතකරණයටයි', 'management' => 'නැත, මම කැමති අලෙවිකරණයටයි']],
+        8 => ['question' => 'නව තාක්ෂණික උපකරණයක් වෙළඳපොලට ආ විට ඔබ මුලින්ම කරන්නේ කුමක්ද?', 'answers' => ['it' => 'එහි Operating System සහ Specs සෙවීම', 'management' => 'එහි මිල, ඉල්ලුම සහ ලාභය ගැන සිතීම', 'engineering' => 'එහි Hardware ක්‍රියාකරන ආකාරය ගැන සිතීම']],
+        9 => ['question' => 'අනාගතයේදී ඔබ වීමට වඩාත්ම කැමති කවුරුන් වීමටද?', 'answers' => ['management' => 'ප්‍රධාන කළමනාකාරවරයෙක් හෝ ව්‍යාපාරිකයෙක්', 'it' => 'ප්‍රධාන මෘදුකාංග ඉංජිනේරුවරයෙක්', 'healthcare' => 'වෛද්‍යවරයෙක් හෝ හෙදියක්']],
+        10 => ['question' => 'ඔබ වැඩක් කිරීමට වඩාත්ම කැමති කුමනාකාර පරිසරයකද?', 'answers' => ['management' => 'මිනිසුන් සමඟ අදහස් හුවමාරු කරගත හැකි කාර්යාලයක', 'engineering' => 'වැඩබිමක හෝ පර්යේෂණාගාරයක', 'healthcare' => 'රෝහලක හෝ රෝගී සත්කාර ස්ථානයක']],
+        11 => ['question' => 'රෝගී හෝ තුවාල ලැබූ මිනිසුන්ට උපකාර කිරීම ගැන ඔබට හැඟෙන්නේ කෙසේද?', 'answers' => ['healthcare' => 'ඉතා කැමතියි — මට මිනිසුන්ට උපකාර කිරීමට ඕන', 'management' => 'මම කළමනාකරණය හරහා උපකාර කිරීමට කැමතියි', 'construction' => 'මම යටිතල පහසුකම් ඉදිකිරීමෙන් උපකාර කිරීමට කැමතියි']],
+        12 => ['question' => 'ගොඩනැගිලි සඳහා මිනුම් ගැනීම සහ පිරිවැය ඇස්තමේන්තු කිරීම ගැන උනන්දුද?', 'answers' => ['construction' => 'ඔව්, ප්‍රමාණ සමීක්ෂණය මට කැමතියි', 'engineering' => 'ඔව්, ඒත් නිර්මාණ පැත්තට කැමතියි', 'management' => 'ඔව්, ඒත් ව්‍යාපාර කළමනාකරණයට කැමතියි']],
+        13 => ['question' => 'රටා හඳුනා ගැනීම සඳහා විශාල දත්ත ප්‍රමාණයක් විශ්ලේෂණය කිරීම ඔබට කැමතිද?', 'answers' => ['it' => 'ඔව්, දත්ත සමඟ වැඩ කිරීම මට කැමතියි', 'management' => 'ඔව්, ව්‍යාපාරික තීරණ සඳහා', 'healthcare' => 'ඔව්, වෛද්‍ය පර්යේෂණ සඳහා']],
+        14 => ['question' => 'වෘත්තීය ජීවිතයේදී ඔබ වඩාත්ම වින්දනය කරන්නේ කුමක්ද?', 'answers' => ['engineering' => 'යන්ත්‍ර හෝ පද්ධති නිර්මාණය කිරීම', 'construction' => 'ඉදිකිරීම් ව්‍යාපෘති කළමනාකරණය කිරීම', 'design' => 'දෘශ්‍ය අන්තර්ගත නිර්මාණය කිරීම']],
+        15 => ['question' => 'ඔබට ලෝකයේ එක් ප්‍රධාන ගැටලුවක් විසඳන්න පුළුවන් නම්, එය කුමක්ද?', 'answers' => ['healthcare' => 'රෝග සුව කිරීම සහ සෞඛ්‍ය සේවා වැඩිදියුණු කිරීම', 'engineering' => 'තිරසාර යටිතල පහසුකම් ගොඩනැගීම', 'it' => 'තාක්ෂණය සංවර්ධනය කිරීම']],
+        16 => ['question' => 'ඔබට ගොවිපලක වැඩ කිරීමට කැමතිද?', 'answers' => ['agriculture' => 'ඔව්, කෘෂිකර්මයට මම බෙහෙවින් කැමතියි', 'construction' => 'නැත, ඉදිකිරීම් ක්ෂේත්‍රයට මම කැමතියි', 'design' => 'නැත, මම නිර්මාණශීලී වැඩ වලට කැමතියි']],
+        17 => ['question' => 'අනිත් අයට දේවල් උගන්වන්නට ඔබ කැමතිද?', 'answers' => ['education' => 'ඔව්, මම ගුරු වෘත්තියට කැමතියි', 'management' => 'ඔව්, ඒත් මම පුහුණු ක්ෂේත්‍රයට කැමතියි', 'healthcare' => 'නැත, මම රෝගී සත්කාරයට කැමතියි']],
+        18 => ['question' => 'බෝග වගා කිරීම සහ පස සකස් කිරීම ගැන ඔබ උනන්දුද?', 'answers' => ['agriculture' => 'ඔව්, ගොවිතැනට මම කැමතියි', 'engineering' => 'නැත, යන්ත්‍ර සූත්‍ර වලට කැමතියි', 'it' => 'නැත, තාක්ෂණයට කැමතියි']],
+        19 => ['question' => 'පන්ති කාමරයක ගුරුවරයෙක් ලෙස වැඩ කිරීමට ඔබ කැමතිද?', 'answers' => ['education' => 'ඔව්, ගුරු වෘත්තියට මම කැමතියි', 'management' => 'නැත, ව්‍යාපාර කළමනාකරණයට කැමතියි', 'healthcare' => 'නැත, සෞඛ්‍ය සේවයට කැමතියි']],
+        20 => ['question' => 'ඔබේ අනාගත වෘත්තිය ලෙස වඩාත්ම කැමති කුමක්ද?', 'answers' => ['agriculture' => 'කෘෂිකර්ම නිලධාරී හෝ ගොවිපල කළමනාකරු', 'education' => 'ගුරුවරයෙක් හෝ අධ්‍යාපන උපදේශකයෙක්', 'it' => 'මෘදුකාංග ඉංජිනේරුවරයෙක්']]
     ];
 } elseif ($lang == 'ta') {
+    // TAMIL — 20 கேள்விகள்
     $questions = [
-        1 => [
-            'question' => 'எந்த வகையான பிரச்சினைகளைத் தீர்ப்பதை நீங்கள் மிகவும் விரும்புகிறீர்கள்?',
-            'answers' => [
-                'it' => 'கணித அல்லது கணினி குறியீட்டில் (Code) உள்ள பிரச்சினைகளைத் தீர்ப்பது',
-                'management' => 'மக்களிடையே உள்ள பிரச்சினைகள் மற்றும் வணிகப் பிரச்சினைகளைத் தீர்ப்பது',
-                'design' => 'படைப்பாற்றல் யோசனைகள் அல்லது வடிவமைப்புகள் பற்றிய பிரச்சினைகளைத் தீர்ப்பது'
-            ]
-        ],
-        2 => [
-            'question' => 'உங்கள் ஓய்வு நேரத்தில் நீங்கள் மிகவும் விரும்பிச் செய்வது எது?',
-            'answers' => [
-                'engineering' => 'மின்னணு சாதனங்கள் அல்லது இயந்திர கருவிகளை பிரித்து சரிசெய்வது',
-                'it' => 'புதிய செயலிகள் (Apps), இணையதளங்கள் அல்லது தொழில்நுட்ப தகவல்களைத் தேடுவது',
-                'design' => 'புகைப்படம் எடுத்தல், ஓவியம் வரைதல் அல்லது வீடியோ எடிட்டிங் செய்வது'
-            ]
-        ],
-        3 => [
-            'question' => 'குழு திட்டத்தில் (Group Project) நீங்கள் அடிக்கடி எடுக்கும் பங்கு என்ன?',
-            'answers' => [
-                'management' => 'குழுவை வழிநடத்துதல் மற்றும் வேலைகளைப் பங்கிட்டுக் கொடுத்தல் (Leader)',
-                'it' => 'முக்கிய தொழில்நுட்ப வேலைப்பகுதி அல்லது கணக்கீடுகளைச் செய்வது',
-                'design' => 'திட்டத்தின் Presentation-ஐ அழகாக வடிவமைப்பது'
-            ]
-        ],
-        4 => [
-            'question' => 'புதிய இணையதளத்தைப் பார்க்கும்போது உங்கள் கவனம் முதலில் எதில் செலுத்தப்படுகிறது?',
-            'answers' => [
-                'design' => 'அதன் நிறங்கள், தோற்றம் மற்றும் அழகு (Layout & Visuals)',
-                'it' => 'அதன் வேகம் மற்றும் அது செயல்படும் விதம் (Features & Speed)',
-                'management' => 'அந்த இணையதளம் மூலம் செய்யப்படும் வணிகம் அல்லது சேவை என்ன என்பது'
-            ]
-        ],
-        5 => [
-            'question' => 'கணினி மொழிகளை (Java, Python, PHP) கற்க உங்களுக்கு ஆர்வம் உள்ளதா?',
-            'answers' => [
-                'it' => 'ஆம், மிகவும் விரும்புகிறேன்',
-                'management' => 'இல்லை, நான் மேலாண்மைத் துறையை விரும்புகிறேன்'
-            ]
-        ],
-        6 => [
-            'question' => 'இயந்திர வரைபடங்கள் அல்லது கட்டிட வரைபடங்களை (Blueprints) படிப்பதில் நீங்கள் விருப்பப்படுகிறீர்களா?',
-            'answers' => [
-                'engineering' => 'ஆம், அது பற்றிய தொழில்நுட்ப அறிவை நான் விரும்புகிறேன்',
-                'design' => 'இல்லை, நான் கலைநயமிக்க படைப்புகளை உருவாக்குவதை விரும்புகிறேன்'
-            ]
-        ],
-        7 => [
-            'question' => 'சமூக ஊடகங்களுக்கு (Social Media) லோகோக்கள் (Logos) மற்றும் சுவரொட்டிகளை வடிவமைக்க நீங்கள் திறமையானவரா?',
-            'answers' => [
-                'design' => 'ஆம், அதற்கு எனக்கு நல்ல படைப்பாற்றல் திறன் உள்ளது',
-                'it' => 'இல்லை, நான் அதன் பின்னணி குறியீட்டை (Coding) விரும்புகிறேன்'
-            ]
-        ],
-        8 => [
-            'question' => 'புதிய தொழில்நுட்ப சாதனம் சந்தைக்கு வரும்போது நீங்கள் முதலில் செய்வது என்ன?',
-            'answers' => [
-                'it' => 'அதன் Operating System மற்றும் Specs பற்றி தேடுவது',
-                'management' => 'அதன் விலை, சந்தை தேவை மற்றும் லாபம் பற்றி சிந்திப்பது'
-            ]
-        ],
-        9 => [
-            'question' => 'எதிர்காலத்தில் நீங்கள் யாராக விரும்புகிறீர்கள்?',
-            'answers' => [
-                'management' => 'தலைமை மேலாளர் (Manager) அல்லது தொழில்முனைவோர்',
-                'it' => 'தலைமை மென்பொருள் பொறியாளர் (Tech Lead/Engineer)'
-            ]
-        ],
-        10 => [
-            'question' => 'நீங்கள் வேலை செய்ய மிகவும் விரும்பும் சூழல் எது?',
-            'answers' => [
-                'management' => 'மக்களுடன் அடிக்கடி கருத்துக்களைப் பரிமாறிக்கொள்ளக்கூடிய அலுவலகத்தில்',
-                'engineering' => 'களத்தில் (Field) அல்லது ஆய்வகத்தில்'
-            ]
-        ]
+        1 => ['question' => 'எந்த வகையான பிரச்சினைகளைத் தீர்ப்பதை விரும்புகிறீர்கள்?', 'answers' => ['it' => 'கணித அல்லது கணினி குறியீட்டு பிரச்சினைகள்', 'management' => 'மக்கள் மற்றும் வணிக பிரச்சினைகள்', 'design' => 'படைப்பாற்றல் யோசனைகள்']],
+        2 => ['question' => 'ஓய்வு நேரத்தில் விரும்பிச் செய்வது எது?', 'answers' => ['engineering' => 'மின்னணு சாதனங்களை பிரித்து சரிசெய்வது', 'it' => 'புதிய செயலிகள், இணையதளங்களை ஆராய்வது', 'design' => 'புகைப்படம், ஓவியம் அல்லது வீடியோ எடிட்டிங்']],
+        3 => ['question' => 'குழு திட்டத்தில் எடுக்கும் பங்கு என்ன?', 'answers' => ['management' => 'குழுவை வழிநடத்துதல் (Leader)', 'it' => 'முக்கிய தொழில்நுட்ப வேலைப்பகுதி', 'design' => 'Presentation-ஐ அழகாக வடிவமைப்பது']],
+        4 => ['question' => 'புதிய இணையதளத்தில் கவனம் முதலில் எதில்?', 'answers' => ['design' => 'நிறங்கள், தோற்றம் (Layout & Visuals)', 'it' => 'வேகம் மற்றும் செயல்பாடு', 'management' => 'வணிகம் அல்லது சேவை']],
+        5 => ['question' => 'கணினி மொழிகளை கற்க ஆர்வம் உள்ளதா?', 'answers' => ['it' => 'ஆம், மிகவும் விரும்புகிறேன்', 'management' => 'இல்லை, மேலாண்மையை விரும்புகிறேன்', 'design' => 'இல்லை, படைப்பாற்றலை விரும்புகிறேன்']],
+        6 => ['question' => 'இயந்திர வரைபடங்களை படிப்பதில் விருப்பம் உள்ளதா?', 'answers' => ['engineering' => 'ஆம், தொழில்நுட்ப அறிவை விரும்புகிறேன்', 'construction' => 'ஆம், கட்டுமான வேலைகளை விரும்புகிறேன்', 'design' => 'இல்லை, கலைநயமிக்க படைப்புகளை விரும்புகிறேன்']],
+        7 => ['question' => 'சமூக ஊடகங்களுக்கு லோகோக்களை வடிவமைக்க திறமையானவரா?', 'answers' => ['design' => 'ஆம், நல்ல படைப்பாற்றல் திறன் உள்ளது', 'it' => 'இல்லை, பின்னணி குறியீட்டை விரும்புகிறேன்', 'management' => 'இல்லை, சந்தைப்படுத்தலை விரும்புகிறேன்']],
+        8 => ['question' => 'புதிய தொழில்நுட்ப சாதனம் வரும்போது முதலில் செய்வது?', 'answers' => ['it' => 'Operating System மற்றும் Specs பற்றி தேடுவது', 'management' => 'விலை, தேவை மற்றும் லாபம் பற்றி சிந்திப்பது', 'engineering' => 'Hardware எவ்வாறு செயல்படுகிறது என்பதை சிந்திப்பது']],
+        9 => ['question' => 'எதிர்காலத்தில் யாராக விரும்புகிறீர்கள்?', 'answers' => ['management' => 'தலைமை மேலாளர் அல்லது தொழில்முனைவோர்', 'it' => 'தலைமை மென்பொருள் பொறியாளர்', 'healthcare' => 'மருத்துவர் அல்லது செவிலியர்']],
+        10 => ['question' => 'வேலை செய்ய விரும்பும் சூழல் எது?', 'answers' => ['management' => 'அலுவலகத்தில் மக்களுடன்', 'engineering' => 'களத்தில் அல்லது ஆய்வகத்தில்', 'healthcare' => 'மருத்துவமனையில்']],
+        11 => ['question' => 'நோயுற்ற மக்களுக்கு உதவுவது பற்றி எப்படி உணருகிறீர்கள்?', 'answers' => ['healthcare' => 'மிகவும் ஆர்வம் — நேரடியாக உதவ விரும்புகிறேன்', 'management' => 'நிர்வாகம் மூலம் உதவ விரும்புகிறேன்', 'construction' => 'உள்கட்டமைப்பு மூலம் உதவ விரும்புகிறேன்']],
+        12 => ['question' => 'கட்டிடங்களுக்கான அளவீடு மற்றும் செலவு மதிப்பீட்டில் ஆர்வம்?', 'answers' => ['construction' => 'ஆம், அளவு ஆய்வு எனக்கு பிடிக்கும்', 'engineering' => 'ஆம், வடிவமைப்பு பக்கத்தை விரும்புகிறேன்', 'management' => 'ஆம், வணிக மேலாண்மையை விரும்புகிறேன்']],
+        13 => ['question' => 'பெரிய தரவுகளை பகுப்பாய்வு செய்வதை விரும்புகிறீர்களா?', 'answers' => ['it' => 'ஆம், தரவுகளுடன் வேலை செய்வது பிடிக்கும்', 'management' => 'ஆம், வணிக முடிவுகளுக்கு', 'healthcare' => 'ஆம், மருத்துவ ஆராய்ச்சிக்கு']],
+        14 => ['question' => 'தொழில் வாழ்க்கையில் மிகவும் அனுபவிக்கும் விஷயம்?', 'answers' => ['engineering' => 'இயந்திரங்களை வடிவமைத்து கட்டுவது', 'construction' => 'கட்டுமான திட்டங்களை நிர்வகிப்பது', 'design' => 'காட்சி உள்ளடக்கத்தை உருவாக்குவது']],
+        15 => ['question' => 'உலகின் ஒரு பிரச்சினையை தீர்க்க முடிந்தால்?', 'answers' => ['healthcare' => 'நோய்களை குணப்படுத்துதல்', 'engineering' => 'நிலையான உள்கட்டமைப்பு', 'it' => 'தொழில்நுட்பத்தை உருவாக்குதல்']],
+        16 => ['question' => 'பண்ணையில் வேலை செய்ய விரும்புகிறீர்களா?', 'answers' => ['agriculture' => 'ஆம், விவசாயத்தை விரும்புகிறேன்', 'construction' => 'இல்லை, கட்டுமானத்தை விரும்புகிறேன்', 'design' => 'இல்லை, படைப்பாற்றலை விரும்புகிறேன்']],
+        17 => ['question' => 'மற்றவர்களுக்கு கற்பிக்க விரும்புகிறீர்களா?', 'answers' => ['education' => 'ஆம், ஆசிரியர் தொழிலை விரும்புகிறேன்', 'management' => 'ஆம், பயிற்சி துறையை விரும்புகிறேன்', 'healthcare' => 'இல்லை, நோயாளி பராமரிப்பை விரும்புகிறேன்']],
+        18 => ['question' => 'பயிர் வளர்ப்பு மற்றும் மண் தயாரிப்பில் ஆர்வம்?', 'answers' => ['agriculture' => 'ஆம், விவசாயத்தை விரும்புகிறேன்', 'engineering' => 'இல்லை, இயந்திரங்களை விரும்புகிறேன்', 'it' => 'இல்லை, தொழில்நுட்பத்தை விரும்புகிறேன்']],
+        19 => ['question' => 'வகுப்பறையில் ஆசிரியராக வேலை செய்ய விரும்புகிறீர்களா?', 'answers' => ['education' => 'ஆம், ஆசிரியர் தொழிலை விரும்புகிறேன்', 'management' => 'இல்லை, வணிக மேலாண்மையை விரும்புகிறேன்', 'healthcare' => 'இல்லை, சுகாதார சேவையை விரும்புகிறேன்']],
+        20 => ['question' => 'எதிர்கால தொழிலாக விரும்புவது எது?', 'answers' => ['agriculture' => 'விவசாய அதிகாரி அல்லது பண்ணை மேலாளர்', 'education' => 'ஆசிரியர் அல்லது கல்வி ஆலோசகர்', 'it' => 'மென்பொருள் பொறியாளர்']]
     ];
 } else {
-    // English (Default)
+    // ENGLISH — 20 QUESTIONS
     $questions = [
-        1 => [
-            'question' => 'What type of problems do you most enjoy solving?',
-            'answers' => [
-                'it' => 'Solving problems in mathematics or computer code',
-                'management' => 'Solving problems between people and business problems',
-                'design' => 'Solving problems related to creative ideas or designs'
-            ]
-        ],
-        2 => [
-            'question' => 'What do you most enjoy doing in your free time?',
-            'answers' => [
-                'engineering' => 'Taking apart and fixing electronic devices or mechanical tools',
-                'it' => 'Exploring new apps, websites, or technical information',
-                'design' => 'Photography, drawing, or video editing'
-            ]
-        ],
-        3 => [
-            'question' => 'What role do you usually take in a group project?',
-            'answers' => [
-                'management' => 'Leading the team and distributing tasks (Leader)',
-                'it' => 'Doing the main technical part or calculations',
-                'design' => 'Designing the project presentation beautifully'
-            ]
-        ],
-        4 => [
-            'question' => 'When you see a new website, what catches your attention first?',
-            'answers' => [
-                'design' => 'Its colors, appearance, and visuals (Layout & Visuals)',
-                'it' => 'Its speed and how it works (Features & Speed)',
-                'management' => 'What business or service the website offers'
-            ]
-        ],
-        5 => [
-            'question' => 'Are you interested in learning programming languages (Java, Python, PHP)?',
-            'answers' => [
-                'it' => 'Yes, I really enjoy it',
-                'management' => 'No, I prefer the management field'
-            ]
-        ],
-        6 => [
-            'question' => 'Do you like studying blueprints or building plans?',
-            'answers' => [
-                'engineering' => 'Yes, I enjoy technical knowledge about it',
-                'design' => 'No, I prefer creating artistic designs'
-            ]
-        ],
-        7 => [
-            'question' => 'Are you good at designing logos and posters for social media?',
-            'answers' => [
-                'design' => 'Yes, I have good creative skills for it',
-                'it' => 'No, I prefer the background coding'
-            ]
-        ],
-        8 => [
-            'question' => 'When a new tech device comes to the market, what do you do first?',
-            'answers' => [
-                'it' => 'Search about its Operating System and Specs',
-                'management' => 'Think about its price, market demand, and profit'
-            ]
-        ],
-        9 => [
-            'question' => 'What do you most want to become in the future?',
-            'answers' => [
-                'management' => 'A top Manager or Entrepreneur',
-                'it' => 'A lead Software Engineer (Tech Lead/Engineer)'
-            ]
-        ],
-        10 => [
-            'question' => 'What kind of environment do you most prefer to work in?',
-            'answers' => [
-                'management' => 'An office where you can constantly exchange ideas with people',
-                'engineering' => 'A field or a laboratory'
-            ]
-        ]
+        1 => ['question' => 'What type of problems do you most enjoy solving?', 'answers' => ['it' => 'Solving problems in mathematics or computer code', 'management' => 'Solving problems between people and business problems', 'design' => 'Solving problems related to creative ideas or designs']],
+        2 => ['question' => 'What do you most enjoy doing in your free time?', 'answers' => ['engineering' => 'Taking apart and fixing electronic devices or mechanical tools', 'it' => 'Exploring new apps, websites, or technical information', 'design' => 'Photography, drawing, or video editing']],
+        3 => ['question' => 'What role do you usually take in a group project?', 'answers' => ['management' => 'Leading the team and distributing tasks (Leader)', 'it' => 'Doing the main technical part or calculations', 'design' => 'Designing the project presentation beautifully']],
+        4 => ['question' => 'When you see a new website, what catches your attention first?', 'answers' => ['design' => 'Its colors, appearance, and visuals', 'it' => 'Its speed and how it works', 'management' => 'What business or service the website offers']],
+        5 => ['question' => 'Are you interested in learning programming languages (Java, Python, PHP)?', 'answers' => ['it' => 'Yes, I really enjoy it', 'management' => 'No, I prefer the management field', 'design' => 'No, I prefer creative design work']],
+        6 => ['question' => 'Do you like studying blueprints or building plans?', 'answers' => ['engineering' => 'Yes, I enjoy technical knowledge about it', 'construction' => 'Yes, I love construction and building work', 'design' => 'No, I prefer creating artistic designs']],
+        7 => ['question' => 'Are you good at designing logos and posters for social media?', 'answers' => ['design' => 'Yes, I have good creative skills for it', 'it' => 'No, I prefer the background coding', 'management' => 'No, I prefer marketing and business strategy']],
+        8 => ['question' => 'When a new tech device comes to the market, what do you do first?', 'answers' => ['it' => 'Search about its Operating System and Specs', 'management' => 'Think about its price, market demand, and profit', 'engineering' => 'Think about how the hardware works internally']],
+        9 => ['question' => 'What do you most want to become in the future?', 'answers' => ['management' => 'A top Manager or Entrepreneur', 'it' => 'A lead Software Engineer', 'healthcare' => 'A doctor, nurse, or healthcare professional']],
+        10 => ['question' => 'What kind of environment do you most prefer to work in?', 'answers' => ['management' => 'An office where you can exchange ideas with people', 'engineering' => 'A field or a laboratory', 'healthcare' => 'A hospital or patient care facility']],
+        11 => ['question' => 'How do you feel about helping sick or injured people?', 'answers' => ['healthcare' => 'Very interested — I want to help people directly', 'management' => 'I prefer to help through management', 'construction' => 'I prefer to help by building infrastructure']],
+        12 => ['question' => 'Are you interested in measuring and estimating costs for buildings?', 'answers' => ['construction' => 'Yes, quantity surveying and cost estimation interest me', 'engineering' => 'Yes, but I prefer the design and technical side', 'management' => 'Yes, but I prefer general business management']],
+        13 => ['question' => 'Do you enjoy analyzing large amounts of data to find patterns?', 'answers' => ['it' => 'Yes, I love working with data and finding insights', 'management' => 'Yes, especially for business decisions', 'healthcare' => 'Yes, especially for medical research']],
+        14 => ['question' => 'What would you enjoy most in a professional career?', 'answers' => ['engineering' => 'Designing and building machines or systems', 'construction' => 'Managing construction projects on-site', 'design' => 'Creating visual content and branding']],
+        15 => ['question' => 'If you could solve one major world problem, what would it be?', 'answers' => ['healthcare' => 'Curing diseases and improving healthcare', 'engineering' => 'Building sustainable infrastructure and clean energy', 'it' => 'Developing technology to connect and help people']],
+        16 => ['question' => 'Would you enjoy working on a farm?', 'answers' => ['agriculture' => 'Yes, I love agriculture and farming', 'construction' => 'No, I prefer the construction field', 'design' => 'No, I prefer creative work']],
+        17 => ['question' => 'Do you like teaching or helping others learn?', 'answers' => ['education' => 'Yes, I want to be a teacher or educator', 'management' => 'Yes, but I prefer training roles in business', 'healthcare' => 'No, I prefer patient care']],
+        18 => ['question' => 'Are you interested in growing crops or managing farmland?', 'answers' => ['agriculture' => 'Yes, agriculture and farming interest me', 'engineering' => 'No, I prefer engineering', 'it' => 'No, I prefer technology']],
+        19 => ['question' => 'Would you like to work in a classroom as a teacher?', 'answers' => ['education' => 'Yes, I would love to be a teacher', 'management' => 'No, I prefer business management', 'healthcare' => 'No, I prefer healthcare services']],
+        20 => ['question' => 'What is your ideal future career?', 'answers' => ['agriculture' => 'Agricultural Officer or Farm Manager', 'education' => 'Teacher or Educational Counselor', 'it' => 'Software Engineer or Tech Lead']]
     ];
 }
 
-// 🌐 භාෂාවට අනුව UI පෙළ
+// 🌐 UI text according to language
 $ui_text = [];
-
 if ($lang == 'si') {
     $ui_text = [
         'title' => 'FuturePath - වෘත්තීය කුසලතා පරීක්ෂණය',
         'nav_dashboard' => 'ප්‍රධාන මෙනුව',
         'nav_aptitude' => 'කුසලතා පරීක්ෂණය',
         'header' => 'වෘත්තීය කුසලතා පරීක්ෂණය 📝',
-        'subheader' => 'පහත ප්‍රශ්න වලට ඔබට වඩාත්ම ගැළපෙන පිළිතුර තෝරන්න. සියලුම ප්‍රශ්න වලට පිළිතුරු සැපයීම අනිවාර්ය වේ.',
+        'subheader' => 'පහත ප්‍රශ්න 20ට ඔබට වඩාත්ම ගැළපෙන පිළිතුර තෝරන්න.',
         'submit_btn' => 'ඉදිරිපත් කර මගේ වෘත්තීය මාවත බලන්න',
         'result_badge' => 'ඔබේ ප්‍රතිඵලය',
         'back_dashboard' => 'උපකරණ පුවරුවට ආපසු',
@@ -498,7 +305,7 @@ if ($lang == 'si') {
         'nav_dashboard' => 'டாஷ்போர்டு',
         'nav_aptitude' => 'திறன் தேர்வு',
         'header' => 'தொழில் திறன் தேர்வு 📝',
-        'subheader' => 'கீழே உள்ள கேள்விகளுக்கு உங்களுக்கு மிகவும் பொருத்தமான பதிலைத் தேர்ந்தெடுக்கவும். அனைத்து கேள்விகளுக்கும் பதிலளிப்பது கட்டாயமாகும்.',
+        'subheader' => 'கீழே உள்ள 20 கேள்விகளுக்கு பொருத்தமான பதிலைத் தேர்ந்தெடுக்கவும்.',
         'submit_btn' => 'சமர்ப்பித்து எனது தொழில் பாதையைப் பார்க்கவும்',
         'result_badge' => 'உங்கள் முடிவு',
         'back_dashboard' => 'டாஷ்போர்டுக்குத் திரும்பு',
@@ -511,7 +318,7 @@ if ($lang == 'si') {
         'nav_dashboard' => 'Dashboard',
         'nav_aptitude' => 'Aptitude Test',
         'header' => 'Career Aptitude Test 📝',
-        'subheader' => 'Choose the answer that best suits you for the following questions. Answering all questions is mandatory.',
+        'subheader' => 'Choose the answer that best suits you for the following 20 questions.',
         'submit_btn' => 'Submit & View My Career Path',
         'result_badge' => 'Your Test Result',
         'back_dashboard' => 'Back to Dashboard',
@@ -528,22 +335,18 @@ if ($lang == 'si') {
     <title><?php echo $ui_text['title']; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    
     <style>
         html, body { height: 100%; margin: 0; background-color: #f3f4f6; font-family: 'Segoe UI', system-ui, sans-serif; }
         .custom-navbar { background-color: #0f172a !important; padding: 15px 30px; }
         .custom-navbar .navbar-brand { font-weight: 800; font-size: 1.5rem; color: #38bdf8 !important; }
         .custom-navbar .nav-link { color: #9ca3af !important; font-weight: 500; }
         .custom-navbar .nav-link:hover { color: #ffffff !important; }
-        
         .test-container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
         .question-card { background: white; border-radius: 14px; padding: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); border: 1px solid #e5e7eb; }
         .form-check-input:checked { background-color: #0284c7; border-color: #0284c7; }
         .form-check-label { cursor: pointer; color: #374151; font-weight: 500; }
-        
         .result-box { background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%); color: white; border-radius: 20px; padding: 35px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); animation: fadeInUp 0.4s ease; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
         .lang-selector { display: flex; gap: 8px; }
         .lang-selector .btn { border-radius: 8px; font-weight: 600; font-size: 0.85rem; padding: 6px 14px; }
     </style>
@@ -577,9 +380,10 @@ if ($lang == 'si') {
                 <h2 class="fw-bold text-info"><?php echo $suggested_career; ?></h2>
                 <p class="mt-3 fs-5 text-white-50" style="line-height: 1.6;"><?php echo $career_description; ?></p>
                 <hr class="my-4 opacity-25">
-                <div class="d-flex gap-3">
+                <div class="d-flex gap-3 flex-wrap">
                     <a href="student_dashboard.php" class="btn btn-outline-light rounded-pill px-4"><i class="bi bi-arrow-left me-1"></i> <?php echo $ui_text['back_dashboard']; ?></a>
                     <a href="book_appointment.php" class="btn btn-info text-dark fw-bold rounded-pill px-4"><?php echo $ui_text['discuss_counselor']; ?> <i class="bi bi-chat-dots-fill ms-1"></i></a>
+                    <a href="recommendation_results.php" class="btn btn-success text-white fw-bold rounded-pill px-4">View Recommendations <i class="bi bi-stars ms-1"></i></a>
                 </div>
             </div>
         <?php endif; ?>

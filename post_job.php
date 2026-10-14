@@ -14,28 +14,28 @@ $error_msg = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['post_job'])) {
     $job_title = $_POST['job_title'];
     $job_category = $_POST['job_category'];
-    $nvq_level = $_POST['nvq_level']; // අලුතින් එකතු කල කොටස
+    $nvq_level = $_POST['nvq_level']; 
     $description = $_POST['description'];
     $qualifications = $_POST['qualifications'];
     $closing_date = $_POST['closing_date'];
 
     try {
-        $query = "INSERT INTO jobs (company_id, job_title, job_category, nvq_level, description, qualifications, closing_date) 
-                  VALUES (:company_id, :job_title, :job_category, :nvq_level, :description, :qualifications, :closing_date)";
+        $query = "INSERT INTO jobs (company_id, job_title, category, nvq_level, description, qualifications, closing_date) 
+          VALUES (:company_id, :job_title, :category, :nvq_level, :description, :qualifications, :closing_date)";
         
         $stmt = $conn->prepare($query);
         $stmt->bindParam(':company_id', $company_id);
         $stmt->bindParam(':job_title', $job_title);
-        $stmt->bindParam(':job_category', $job_category);
+        $stmt->bindParam(':category', $job_category);
         $stmt->bindParam(':nvq_level', $nvq_level);
         $stmt->bindParam(':description', $description);
         $stmt->bindParam(':qualifications', $qualifications);
         $stmt->bindParam(':closing_date', $closing_date);
 
         if ($stmt->execute()) {
-            $success_msg = "රැකියා පුරප්පාඩුව NVQ මට්ටම සමඟ සාර්ථකව පද්ධතියට ඇතුළත් කරන ලදී!";
+            $success_msg = "The job vacancy was successfully entered into the system with the NVQ level!";
         } else {
-            $error_msg = "යම් දෝෂයක් සිදු විය. කරුණාකර නැවත උත්සාහ කරන්න.";
+            $error_msg = "An error occurred. Please try again.";
         }
     } catch (PDOException $e) {
         $error_msg = "Database Error: " . $e->getMessage();
@@ -90,7 +90,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['post_job'])) {
 
         <div class="form-card">
             <h3 class="fw-bold text-dark mb-2"><i class="bi bi-file-earmark-plus-fill text-primary me-2"></i>Post a New Vacancy</h3>
-            <p class="text-muted small mb-4">ඔබේ ආයතනයේ පුරප්පාඩු NVQ මට්ටම් සමඟ ශිෂ්‍ය ප්‍රජාව වෙත ඉදිරිපත් කරන්න.</p>
+            <p class="text-muted small mb-4">Present your institution's vacancies to the student community with NVQ levels.</p>
             <hr class="mb-4">
             
             <form action="post_job.php" method="POST">
@@ -113,7 +113,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['post_job'])) {
                 <div class="mb-3">
                     <label class="form-label fw-semibold text-secondary">Required NVQ Level</label>
                     <select class="form-select py-2 rounded-2" name="nvq_level" required>
-                        <option value="Any" selected>Any NVQ Level (විශේෂ මට්ටමක් අවශ්‍ය නොවේ)</option>
+                        <option value="Any" selected>Any NVQ Level (No special level required)</option>
                         <option value="NVQ Level 3">NVQ Level 3 (Certificate)</option>
                         <option value="NVQ Level 4">NVQ Level 4 (Certificate)</option>
                         <option value="NVQ Level 5">NVQ Level 5 (Diploma / HNDIT)</option>

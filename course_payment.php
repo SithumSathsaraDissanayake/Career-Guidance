@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'student') {
 }
 
 $user_id = $_SESSION['user_id'];
-$course_id = isset($_GET['course_id']) ? intval($_GET['course_id']) : 0;
+$career_id = isset($_GET['career_id']) ? intval($_GET['career_id']) : 0;
 $msg = "";
 $error = "";
 
@@ -18,34 +18,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_slip'])) {
     // Slip Image Upload Handling
     if (isset($_FILES['slip_image']) && $_FILES['slip_image']['error'] === 0) {
         $allowed = ['jpg', 'jpeg', 'png', 'pdf'];
+        $max_size = 5 * 1024 * 1024; // 5MB
         $filename = $_FILES['slip_image']['name'];
         $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
 
-        if (in_array($ext, $allowed)) {
+        if (!in_array($ext, $allowed)) {
+            $error = "Please provide the receipt in JPG, PNG or PDF format.";
+        } elseif ($_FILES['slip_image']['size'] > $max_size) {
+            $error = "The file size must be less than 5MB.";
+        } else {
             $new_filename = "SLIP_" . time() . "_" . rand(1000, 9999) . "." . $ext;
             $upload_dir = "uploads/slips/";
 
             if (!is_dir($upload_dir)) {
-                mkdir($upload_dir, 0777, true);
+                mkdir($upload_dir, 0755, true);
             }
 
-            if (move_uploaded_file($_FILES['slip_image']['tmp_filename'], $upload_dir . $new_filename)) {
-                $stmt = $conn->prepare("INSERT INTO payments (user_id, course_id, amount, slip_image, status) VALUES (:u, :c, :a, :img, 'Pending')");
+            // ✅ FIX: tmp_filename → tmp_name
+            if (move_uploaded_file($_FILES['slip_image']['tmp_name'], $upload_dir . $new_filename)) {
+                $stmt = $conn->prepare("INSERT INTO payments (user_id, career_id, amount, slip_image, status) 
+VALUES (:u, :c, :a, :img, 'Pending')");
                 $stmt->execute([
                     'u' => $user_id,
-                    'c' => $course_id,
+                    'c' => $career_id,
                     'a' => $amount,
                     'img' => $new_filename
                 ]);
-                $msg = "බැංකු රිසිට්පත සාර්ථකව යොමු කරන ලදී. පරිපාලකගේ අනුමැතිය ලැබුණු පසු කෝස් එක ලබාගත හැක.";
+                $msg = "The bank receipt was successfully submitted. The course can be accessed after approval from the administrator.";
             } else {
-                $error = "ෆයිල් එක Upload කිරීමට අපොහොසත් විය.";
+                $error = "Failed to upload the file.";
             }
-        } else {
-            $error = "කරුණාකර JPG, PNG හෝ PDF ෆෝමැට් එකෙන් රිසිට්පත ලබාදෙන්න.";
         }
     } else {
-        $error = "කරුණාකර බැංකු රිසිට්පත තෝරන්න.";
+        $error = "Please select bank receipt.";
     }
 }
 ?>
@@ -61,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_slip'])) {
 <div class="container py-5" style="max-width: 550px;">
     <div class="card shadow-sm border-0 rounded-4 p-4">
         <h4 class="fw-bold text-dark mb-3">Course Fee Payment</h4>
-        <p class="text-muted small">පහත දක්වා ඇති බැංකු ගිණුමට මුදල් තැන්පත් කර රිසිට්පත Upload කරන්න.</p>
+        <p class="text-muted small">Deposit the money into the bank account below and upload the receipt.</p>
         
         <div class="alert alert-info rounded-3 small">
             <strong>Bank Details:</strong><br>
@@ -86,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_slip'])) {
             <div class="mb-4">
                 <label class="form-label fw-semibold">Upload Deposit Slip Image</label>
                 <input type="file" name="slip_image" class="form-control" accept="image/*,.pdf" required>
+                <small class="text-muted">Max size: 5MB. Formats: JPG, PNG, PDF</small>
             </div>
 
             <button type="submit" name="upload_slip" class="btn btn-primary w-100 fw-bold py-2 rounded-2">

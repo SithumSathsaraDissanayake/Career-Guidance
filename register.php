@@ -1,23 +1,33 @@
 <?php
 session_start();
-include 'config/db.php'; // ඩේටාබේස් එක නිවැරදිව ලින්ක් කළා
+include 'config/db.php'; 
 
 $msg = "";
 
-// 📥 Register ප්‍රොසෙස් එක (POST Request)
+// 📥 Register(POST Request)
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register_user'])) {
     $name = trim($_POST['name']);
     $email = trim($_POST['email']);
+        // ✅ Clean email — remove any HTML/special chars
+        $email = filter_var($email, FILTER_SANITIZE_EMAIL);
+        $email = str_replace(['"', '>', '<', '&'], '', $email);
+
+        // Validate email
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $msg = "<div class='alert alert-danger text-center small py-2 mb-3'>Invalid email address!</div>";
+            // Stop processing
+            exit();
+        }
     $role = $_POST['role'];
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
 
-    // 🛑 මූලික වැරදි පරීක්ෂා කිරීම් (Validations)
+    // 🛑 (Validations)
     if ($password !== $confirm_password) {
         $msg = "<div class='alert alert-danger text-center small py-2 mb-3'>Passwords do not match!</div>";
     } else {
         try {
-            // 🔍 1. ඊමේල් එක දැනටමත් පද්ධතියේ තියෙනවාදැයි බැලීම
+            // 🔍 1. Check if the email is already in the system
             $check_query = "SELECT user_id FROM users WHERE email = :email LIMIT 1";
             $check_stmt = $conn->prepare($check_query);
             $check_stmt->execute(['email' => $email]);
@@ -25,10 +35,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register_user'])) {
             if ($check_stmt->fetch()) {
                 $msg = "<div class='alert alert-danger text-center small py-2 mb-3'>Email is already registered!</div>";
             } else {
-                // 🔑 2. මුරපදය Hash කිරීම (Security)
+                // 🔑 2. password Hashing (Security)
                 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-                // 📝 3. දත්ත ඩේටාබේස් එකට ඇතුළත් කිරීම (users table)
+                // 📝 3. Inserting data into the database (users table)
                 $insert_query = "INSERT INTO users (name, email, role, password) VALUES (:name, :email, :role, :password)";
                 $insert_stmt = $conn->prepare($insert_query);
                 $insert_stmt->execute([
@@ -38,10 +48,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register_user'])) {
                     'password' => $hashed_password
                 ]);
 
-                // 🏢 4. Role එක 'company' නම්, companies table එකටත් දත්ත ඇතුළත් කිරීම
+                // 🏢 4. If the role is 'company', insert data into the companies table as well
                 if ($role === 'company') {
                     $user_id = $conn->lastInsertId();
-                    $company_name = $name; // Register වෙද්දී දාපු name එක company_name ලෙස ගනී
+                    $company_name = $name; // The name entered during registration is taken as company_name.
                     $phone = isset($_POST['phone']) ? trim($_POST['phone']) : null;
                     $website = isset($_POST['website']) ? trim($_POST['website']) : null;
 
@@ -53,6 +63,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register_user'])) {
                         'phone' => $phone,
                         'website' => $website
                     ]);
+                    // 🎓 Counselor profile auto-create
+                if ($role === 'counselor' || $role === 'cgo') {
+                    $user_id = $conn->lastInsertId();
+                    
+                    $counselor_query = "INSERT INTO counselors (user_id, specialization, bio, phone, experience_years) 
+                                        VALUES (:user_id, NULL, NULL, NULL, 0)";
+                    $counselor_stmt = $conn->prepare($counselor_query);
+                    $counselor_stmt->execute(['user_id' => $user_id]);
+                }
                 }
 
                 $msg = "<div class='alert alert-success text-center small py-2 mb-3'>Registration successful! <a href='login.php' class='text-dark fw-bold text-decoration-none'>Login Now</a></div>";
@@ -289,7 +308,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register_user'])) {
                 <label class="form-label small fw-bold">User Role</label>
                 <select name="role" class="form-select" required>
                     <option value="" disabled selected>Select your identity</option>
-                    <option value="student">HNDIT Student / Other Trainee</option>
+                    <option value="student">Student / Other Trainee</option>
                     <option value="counselor">Career Guidance Officer</option>
                     <option value="company">Company / Other Organization</option>
                     <option value="admin">Administrator</option>

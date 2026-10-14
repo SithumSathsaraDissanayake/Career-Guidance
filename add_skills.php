@@ -18,11 +18,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['save_skills'])) {
         $msg = "<div class='alert alert-warning'>කරුණාකර අවම වශයෙන් එක skill එකක්වත් තෝරන්න!</div>";
     } else {
         try {
-            // පරණ skills delete කරන්න
+            // delete the old skills
             $delStmt = $conn->prepare("DELETE FROM user_skills WHERE user_id = :uid");
             $delStmt->execute(['uid' => $user_id]);
             
-            // අලුත් skills insert කරන්න
+            // insert new skills
             $insStmt = $conn->prepare(
                 "INSERT INTO user_skills (user_id, skill_name) VALUES (:uid, :skill)"
             );
@@ -39,7 +39,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['save_skills'])) {
     }
 }
 
-// Categories සහ skills load කරන්න
+// Load categories and skills
 $categories = [];
 try {
     $stmt = $conn->query("
@@ -70,7 +70,7 @@ try {
     die("Error loading skills: " . $e->getMessage());
 }
 
-// දැනට user ගේ skills ලබාගන්න
+// Get the current user's skills
 $currentSkills = [];
 try {
     $stmt = $conn->prepare("SELECT skill_name FROM user_skills WHERE user_id = :uid");
@@ -171,7 +171,7 @@ try {
     
     <div class="card card-custom p-4 mb-4 text-center">
         <h2 class="fw-bold mb-2">🎯 Select Your Skills</h2>
-        <p class="text-muted mb-0">ඔබට තියෙන skills තෝරන්න. මේවා ඔබට ගැළපෙනම career එක recommend කරන්න භාවිතා වේ.</p>
+        <p class="text-muted mb-0">Select the skills you have. These will be used to recommend the career that best suits you.</p>
     </div>
 
     <?php echo $msg; ?>
